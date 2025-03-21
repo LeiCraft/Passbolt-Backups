@@ -2,7 +2,7 @@
 class Shell {
     static async run(cmd: string) {
         try {
-            const result = await Bun.$`${{ raw: cmd }}`;
+            const result = await Bun.$`${{ raw: cmd }}`.quiet();
             return { code: result.exitCode, data: result.text() };
         } catch {
             return { code: 1 } as const;
