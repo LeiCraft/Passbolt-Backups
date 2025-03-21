@@ -115,7 +115,7 @@ export class ConfigHandler {
                                     !!config.DOCKER_POSSBOLT_ENV &&
                                     !!config.DOCKER_DB_ENV;
 
-            if (config.DOCKER_DB_TYPE?.toLowerCase() === "mysql" || config.DOCKER_DB_TYPE?.toLowerCase() === "postgres") {
+            if (config.DOCKER_DB_TYPE?.toLowerCase() !== "mysql" && config.DOCKER_DB_TYPE?.toLowerCase() !== "postgres") {
                 console.error("The DOCKER_DB_TYPE has to be either 'mysql' or 'postgres'.");
                 process.exit(1);
             }
