@@ -44,6 +44,8 @@ export class BackupManager {
             "env/db.env": dbEnv
         });
 
+        return archive;
+
     }
 
 

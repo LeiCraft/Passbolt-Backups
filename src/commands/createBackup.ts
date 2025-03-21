@@ -34,7 +34,7 @@ export class CreateBackupCMD extends CLICMD {
             }
             case "docker": {
 
-                const archive = BackupManager.createDockerBackup({
+                const archive = await BackupManager.createDockerBackup({
                     passboltContainerName: config.DOCKER_PASSBOLT_CONTAINER,
                     passboltEnvPath: config.DOCKER_POSSBOLT_ENV,
                     dbContainerName: config.DOCKER_DB_CONTAINER,
