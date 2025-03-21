@@ -128,7 +128,7 @@ export class ConfigHandler {
             console.error("The INSTALLATION_TYPE has to be either 'default' or 'docker'.");
             process.exit(1);
         }
-
+        this.config = config;
         return this.config;
     }
 
