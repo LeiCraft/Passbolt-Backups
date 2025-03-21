@@ -42,7 +42,7 @@ export class CreateBackupCMD extends CLICMD {
                     dbEnvPath: config.DOCKER_DB_ENV
                 } as any);
 
-                s3.uploadBackup(archive);
+                await s3.uploadBackup(archive);
 
                 break;
             }
