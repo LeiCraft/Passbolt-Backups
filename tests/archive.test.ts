@@ -33,13 +33,13 @@ describe("encoding_decoding", () => {
         const archive = BackupArchive.fromFileList(Uint64.from(new UTCDate().getTime()), files);
 
         const hex = archive.encodeToHex();
-        const decoded = BackupArchive.fromDecodedHex(hex);
+        const decoded = BackupArchive.fromDecodedHex(hex, true);
         if (!decoded) {
             throw new Error("Decoding failed");
         }
 
-        expect(JSON.stringify(decoded)).toEqual(JSON.stringify(archive));
-
+        expect(decoded.length).toBe(hex.getLen());
+        expect(JSON.stringify(decoded.data)).toEqual(JSON.stringify(archive));
     });
 
 

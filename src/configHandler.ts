@@ -43,9 +43,28 @@ export class ConfigHandler {
         .add("S3_ACCESS_KEY_ID", true)
         .add("S3_SECRET_ACCESS_KEY", true)
         .add("S3_BUCKET", false)
-        .add("S3_BASE_PATH", false);
+        .add("S3_BASE_PATH", false)
 
-    private static config: ReturnType<typeof ConfigHandler.schema.validateAndParse> | null = null;
+        .add("INSTALLATION_TYPE", true)
+
+        .add("WEB_SERVER_USER", false)
+        .add("CAKE_BIN", false)
+        .add("GPG_SERVER_PRIVATE_KEY", false)
+        .add("GPG_SERVER_PUBLIC_KEY", false)
+        .add("PASSBOLT_CONFIG_FILE", false)
+
+        .add("DOCKER_PASSBOLT_CONTAINER", false)
+        .add("DOCKER_DB_CONTAINER", false)
+        .add("DOCKER_POSSBOLT_ENV", false)
+        .add("DOCKER_DB_ENV", false)
+
+        .add("ENCRYPTION_PASSPHRASE", false);
+        
+
+    private static config: (
+        ReturnType<typeof ConfigHandler.schema.validateAndParse> &
+        { USE_DOCKER: boolean }
+    ) | null = null;
 
     /** You have to call {@link ConfigHandler.parseConfigFile} before trying to access the config. */
     static getConfig() {
@@ -75,7 +94,36 @@ export class ConfigHandler {
             await this.loadEnvWithoutOverwrite(file);
         }
 
-        this.config = this.schema.validateAndParse();
+        const config = this.schema.validateAndParse();
+
+        if (config.INSTALLATION_TYPE === "DEFAULT") {
+
+            const hasStandardConfig = !!config.WEB_SERVER_USER &&
+                                      !!config.CAKE_BIN &&
+                                      !!config.GPG_SERVER_PRIVATE_KEY &&
+                                      !!config.GPG_SERVER_PUBLIC_KEY &&
+                                      !!config.PASSBOLT_CONFIG_FILE;
+
+            if (!hasStandardConfig) {
+                console.error("The standard configuration for INSTALLATION_TYPE 'DEFAULT' is not complete.");
+                process.exit(1);
+            }
+        } else if (config.INSTALLATION_TYPE === "DOCKER") {
+
+            const hasDockerConfig = !!config.DOCKER_PASSBOLT_CONTAINER &&
+                                    !!config.DOCKER_DB_CONTAINER &&
+                                    !!config.DOCKER_POSSBOLT_ENV &&
+                                    !!config.DOCKER_DB_ENV;
+
+            if (!hasDockerConfig) {
+                console.error("The docker configuration for INSTALLATION_TYPE 'DOCKER' is not complete.");
+                process.exit(1);
+            }
+        } else {
+            console.error("The INSTALLATION_TYPE has to be either 'DEFAULT' or 'DOCKER'.");
+            process.exit(1);
+        }
+
         return this.config;
     }
 

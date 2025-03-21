@@ -26,18 +26,56 @@ export class SingleFile extends Container {
 
 }
 
-export class BackupArchive extends Container {
+export class BackupArchiveHeader extends Container {
 
     constructor(
         readonly time: Uint64,
-        readonly files: SingleFile[],
+        public encrypted: boolean = false,
         readonly version: Uint16 = Uint16.from(0)
     ) {super()}
 
+    protected static fromDict(obj: Dict<any>) {
+        return new BackupArchive(obj.time, obj.encrypted, obj.version);
+    }
+
+    protected static readonly encodingSettings: readonly DataEncoder[] = [
+        BE(Uint16, "version"),
+        BE.Bool("encrypted"),
+        BE(Uint64, "time")
+    ]
+
+}
+
+export class BackupArchiveContent extends Container {
+    constructor(
+        readonly files: SingleFile[],
+    ) {super()}
+
+    protected static fromDict(obj: Dict<any>) {
+        return new BackupArchiveContent(obj.files);
+    }
+
+    protected static readonly encodingSettings: readonly DataEncoder[] = [
+        BE.Array("files", "unlimited", SingleFile)
+    ]
+}
+
+export class BackupArchive extends BackupArchiveHeader {
+
+    constructor(
+        time: Uint64,
+        readonly content: BackupArchiveContent,
+        encrypted: boolean,
+        version: Uint16 = Uint16.from(0)
+    ) {super(time, encrypted, version)}
+
     static fromFileList(time: Uint64, files: FileList) {
         return new BackupArchive(
-            time, 
-            Object.entries(files).map(([path, data]) => new SingleFile(path, data))
+            time,
+            new BackupArchiveContent(
+                Object.entries(files).map(([path, data]) => new SingleFile(path, data))
+            ),
+            false,
         );
     }
 
@@ -50,13 +88,12 @@ export class BackupArchive extends Container {
     }
 
     protected static fromDict(obj: Dict<any>) {
-        return new BackupArchive(obj.time, obj.files, obj.version);
+        return new BackupArchive(obj.time, obj.content, obj.encrypted, obj.version);
     }
 
     protected static readonly encodingSettings: readonly DataEncoder[] = [
-        BE(Uint16, "version"),
-        BE(Uint64, "time"),
-        BE.Array("files", "unlimited", SingleFile)
+        ...BackupArchiveHeader.encodingSettings,
+        BE.Object("content", BackupArchiveContent)
     ]
 
 }
