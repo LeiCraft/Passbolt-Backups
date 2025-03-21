@@ -19,6 +19,10 @@
   },
   "dependencies": {
     "@cleverjs/cli": "^1.1.8",
+    "@date-fns/utc": "^2.1.0",
+    "date-fns": "^4.1.0",
+    "dotenv": "^16.4.7",
+    "flexbuf": "^1.2.2",
     "low-level": "^1.0.15"
   }
 }
