@@ -38,7 +38,7 @@ export class S3Service {
         }
     }
 
-    async uploadBackup(data: BackupArchive) {
-        return await this.client.write(`${this.basePath + new Date().toUTCString()}.backup`, data.encodeToHex().getRaw());
+    async uploadBackup(backup: BackupArchive) {
+        return await this.client.write(this.basePath + backup.getArchiveName(), backup.encodeToHex().getRaw());
     }
 }

@@ -1,6 +1,7 @@
 import { CLICMD, type CLICMDExecMeta } from "@cleverjs/cli";
 import { ConfigHandler } from "../configHandler";
 import { BackupManager } from "../manager";
+import { S3Service } from "../s3-service";
 
 
 export class CreateBackupCMD extends CLICMD {
@@ -15,6 +16,14 @@ export class CreateBackupCMD extends CLICMD {
             console.error("Error: Configuration not loaded.");
             process.exit(1);
         }
+
+        const s3 = new S3Service({
+            endpoint: config.S3_ENDPOINT,
+            accessKeyId: config.S3_ACCESS_KEY_ID,
+            secretAccessKey: config.S3_SECRET_ACCESS_KEY,
+            bucket: config.S3_BUCKET,
+            basePath: config.S3_BASE_PATH
+        })
 
         switch (config.INSTALLATION_TYPE) {
             case "default": {
@@ -32,6 +41,8 @@ export class CreateBackupCMD extends CLICMD {
                     dbType: config.DOCKER_DB_TYPE,
                     dbEnvPath: config.DOCKER_DB_ENV
                 } as any);
+
+                s3.uploadBackup(archive);
 
                 break;
             }
