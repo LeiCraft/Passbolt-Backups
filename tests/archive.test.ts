@@ -25,9 +25,9 @@ describe("encoding_decoding", () => {
     test("archive", () => {
 
         const files = {
-            "path/to/file1.txt": Uint.from("file 1 content", "utf8"),
-            "path/to/file2.txt": Uint.from("file 2 content", "utf8"),
-            "path/to/file3.txt": Uint.from("file 3 content", "utf8"),
+            "path/to/file1.txt": "file 1 content",
+            "path/to/file2.txt": "file 2 content",
+            "path/to/file3.txt": "file 3 content",
         };
 
         const archive = BackupArchive.fromFileList(Uint64.from(new UTCDate().getTime()), files);

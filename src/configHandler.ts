@@ -17,7 +17,7 @@ class ConfigSchema<T extends ConfigSchemaSettings = {}> {
         return this as ConfigSchema<T & { [K in KEY]: REQUIRED }>;
     }
 
-    public validateAndParse() {
+    public parse() {
         const result: ConfigLike<T> = {} as ConfigLike<T>;
 
         for (const [key, required] of Object.entries(this.schema)) {
@@ -55,6 +55,7 @@ export class ConfigHandler {
 
         .add("DOCKER_PASSBOLT_CONTAINER", false)
         .add("DOCKER_DB_CONTAINER", false)
+        .add("DOCKER_DB_TYPE", false)
         .add("DOCKER_POSSBOLT_ENV", false)
         .add("DOCKER_DB_ENV", false)
 
@@ -62,8 +63,7 @@ export class ConfigHandler {
         
 
     private static config: (
-        ReturnType<typeof ConfigHandler.schema.validateAndParse> &
-        { USE_DOCKER: boolean }
+        ReturnType<typeof ConfigHandler.schema.parse>
     ) | null = null;
 
     /** You have to call {@link ConfigHandler.parseConfigFile} before trying to access the config. */
@@ -94,9 +94,9 @@ export class ConfigHandler {
             await this.loadEnvWithoutOverwrite(file);
         }
 
-        const config = this.schema.validateAndParse();
+        const config = this.schema.parse();
 
-        if (config.INSTALLATION_TYPE === "DEFAULT") {
+        if (config.INSTALLATION_TYPE.toLowerCase() === "default") {
 
             const hasStandardConfig = !!config.WEB_SERVER_USER &&
                                       !!config.CAKE_BIN &&
@@ -105,22 +105,27 @@ export class ConfigHandler {
                                       !!config.PASSBOLT_CONFIG_FILE;
 
             if (!hasStandardConfig) {
-                console.error("The standard configuration for INSTALLATION_TYPE 'DEFAULT' is not complete.");
+                console.error("The standard configuration for INSTALLATION_TYPE 'default' is not complete.");
                 process.exit(1);
             }
-        } else if (config.INSTALLATION_TYPE === "DOCKER") {
+        } else if (config.INSTALLATION_TYPE.toLowerCase() === "docker") {
 
             const hasDockerConfig = !!config.DOCKER_PASSBOLT_CONTAINER &&
                                     !!config.DOCKER_DB_CONTAINER &&
                                     !!config.DOCKER_POSSBOLT_ENV &&
                                     !!config.DOCKER_DB_ENV;
 
+            if (config.DOCKER_DB_TYPE?.toLowerCase() === "mysql" || config.DOCKER_DB_TYPE?.toLowerCase() === "postgres") {
+                console.error("The DOCKER_DB_TYPE has to be either 'mysql' or 'postgres'.");
+                process.exit(1);
+            }
+
             if (!hasDockerConfig) {
-                console.error("The docker configuration for INSTALLATION_TYPE 'DOCKER' is not complete.");
+                console.error("The docker configuration for INSTALLATION_TYPE 'docker' is not complete.");
                 process.exit(1);
             }
         } else {
-            console.error("The INSTALLATION_TYPE has to be either 'DEFAULT' or 'DOCKER'.");
+            console.error("The INSTALLATION_TYPE has to be either 'default' or 'docker'.");
             process.exit(1);
         }
 

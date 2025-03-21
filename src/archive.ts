@@ -5,7 +5,7 @@ import { Uint, Uint16, Uint64 } from "low-level";
 type FilePath = string;
 
 type FileList = {
-    [key: FilePath]: Uint;
+    [key: FilePath]: Uint | string;
 }
 
 export class SingleFile extends Container {
@@ -73,7 +73,10 @@ export class BackupArchive extends BackupArchiveHeader {
         return new BackupArchive(
             time,
             new BackupArchiveContent(
-                Object.entries(files).map(([path, data]) => new SingleFile(path, data))
+                Object.entries(files).map(([path, data]) => new SingleFile(
+                    path,
+                    data instanceof Uint ? data : Uint.from(data, "utf8")
+                ))
             ),
             false,
         );

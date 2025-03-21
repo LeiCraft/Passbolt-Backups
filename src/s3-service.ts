@@ -1,5 +1,5 @@
 import { S3Client } from "bun";
-import type { Uint } from "low-level";
+import type { BackupArchive } from "./archive";
 
 export class S3Service {
 
@@ -38,7 +38,7 @@ export class S3Service {
         }
     }
 
-    async uploadBackup(data: Uint) {
-        return await this.client.write(`${this.basePath + new Date().toUTCString()}.backup`, data.getRaw());
+    async uploadBackup(data: BackupArchive) {
+        return await this.client.write(`${this.basePath + new Date().toUTCString()}.backup`, data.encodeToHex().getRaw());
     }
 }
