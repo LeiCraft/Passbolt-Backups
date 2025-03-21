@@ -15,7 +15,7 @@ class Main extends CLIApp {
     protected async run_help(meta: CLICMDExecMeta): Promise<void> {
         console.log("Usage: passbolt-s3-backups [options] <command>");
         console.log("Options:");
-        console.log("  --config <path_to_env>  Path to the env file, if there are not automatically set");
+        console.log("  --config=<path_to_env>  Path to the env file, if there are not automatically set");
         super.run_help(meta);        
     }
 
