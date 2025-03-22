@@ -1,36 +1,91 @@
 import dotenv from "dotenv";
 
-type ConfigSchemaSettings = {
-    [key: string]: boolean;
+interface ConfigSchemaSetting<
+    REQUIRED extends ConfigSchemaSetting.Required,
+    TYPE extends ConfigSchemaSetting.Type = undefined,
+    DEPENDENCIES extends ConfigSchemaSetting.Dependencies = undefined
+> {
+    required: REQUIRED;
+    type?: TYPE;
+    dependencies?: DEPENDENCIES;
+}
+
+namespace ConfigSchemaSetting {
+    export type Required = boolean;
+    export type Type = string[] | undefined;
+    export type Dependencies = Record<string, string[]> | undefined;
+    export type Sample = ConfigSchemaSetting<Required, Type, Dependencies>;
+}
+
+type ConfigValueType<
+    T extends ConfigSchemaSetting.Sample,
+    F = [T] extends [ConfigSchemaSetting<any, infer U, any>]
+    ? U extends string[]
+        ? U[number]
+        : string
+    : string
+> = T["required"] extends true ? F : F | undefined;
+
+interface ConfigSchemaSettings {
+    [key: string]: ConfigSchemaSetting.Sample;
 }
 
 type ConfigLike<T extends ConfigSchemaSettings> = {
-    [K in keyof T]: T[K] extends true ? string : string | undefined;
+    [K in keyof T]: ConfigValueType<T[K]>;
 }
 
 class ConfigSchema<T extends ConfigSchemaSettings = {}> {
 
-    private schema: Dict<boolean> = {};
+    readonly schema: T = {} as any;
 
-    public add<KEY extends string, REQUIRED extends boolean>(key: KEY, required: REQUIRED) {
-        this.schema[key] = required;
-        return this as ConfigSchema<T & { [K in KEY]: REQUIRED }>;
+    public add<
+        KEY extends string,
+        Setings extends ConfigSchemaSetting<ISREQUIRED, TYPE, DEPENDENCIES>,
+        ISREQUIRED extends boolean,
+        const TYPE extends ConfigSchemaSetting.Type = undefined,
+        const DEPENDENCIES extends ConfigSchemaSetting.Dependencies = undefined
+    >(
+        key: KEY,
+        required = false as ISREQUIRED,
+        type?: TYPE,
+        dependencies?: DEPENDENCIES
+    ) {
+        (this.schema as any)[key] = { required, type, dependencies };
+        return this as any as ConfigSchema<T & { [K in KEY]: Setings }>;
     }
 
     public parse() {
         const result: ConfigLike<T> = {} as ConfigLike<T>;
 
-        for (const [key, required] of Object.entries(this.schema)) {
+        for (const [key, settings] of Object.entries(this.schema)) {
+
             if (!process.env[key]) {
-                if (required) {
+                if (settings.required) {
                     console.error(`The environment variable ${key} is required but not set.`);
                     process.exit(1);
                 }
                 continue;
             }
+
+            if (settings.type && !settings.type.includes(process.env[key].toLowerCase())) {
+                console.error(`The environment variable ${key} has to be one of the following: ${settings.type.join(", ")}`);
+                process.exit(1);
+            }
+
+            if (settings.dependencies) {
+                const dependencies = settings.dependencies[process.env[key]];
+                if (!dependencies) continue;
+
+                for (const dep of dependencies) {
+                    if (!process.env[dep]) {
+                        console.error(`The environment variable ${dep} is required by ${key} but not set.`);
+                        process.exit(1);
+                    }
+                }
+            }
+
             (result[key] as any) = process.env[key];
         }
-
         return result;
     }
 
@@ -45,7 +100,10 @@ export class ConfigHandler {
         .add("S3_BUCKET", false)
         .add("S3_BASE_PATH", false)
 
-        .add("INSTALLATION_TYPE", true)
+        .add("INSTALLATION_TYPE", true, ["default", "docker"], {
+            "default": ["WEB_SERVER_USER", "CAKE_BIN", "GPG_SERVER_PRIVATE_KEY", "GPG_SERVER_PUBLIC_KEY", "PASSBOLT_CONFIG_FILE"],
+            "docker": ["DOCKER_PASSBOLT_CONTAINER", "DOCKER_DB_CONTAINER", "DOCKER_DB_TYPE", "DOCKER_LIVE_ENV"]
+        })
 
         .add("WEB_SERVER_USER", false)
         .add("CAKE_BIN", false)
@@ -55,17 +113,18 @@ export class ConfigHandler {
 
         .add("DOCKER_PASSBOLT_CONTAINER", false)
         .add("DOCKER_DB_CONTAINER", false)
-        .add("DOCKER_DB_TYPE", false)
+        .add("DOCKER_DB_TYPE", false, ["mysql", "postgres"])
+
+        .add("DOCKER_LIVE_ENV", false, ["true", "false"], {
+            "false": ["DOCKER_POSSBOLT_ENV", "DOCKER_DB_ENV"]
+        })
         .add("DOCKER_POSSBOLT_ENV", false)
         .add("DOCKER_DB_ENV", false)
-        .add("DOCKER_LIVE_ENV", false)
 
         .add("ENCRYPTION_PASSPHRASE", false);
         
 
-    private static config: (
-        ReturnType<typeof ConfigHandler.schema.parse>
-    ) | null = null;
+    private static config: ConfigLike<typeof this.schema.schema> | null = null;
 
     /** You have to call {@link ConfigHandler.parseConfigFile} before trying to access the config. */
     static getConfig() {
@@ -95,49 +154,7 @@ export class ConfigHandler {
             await this.loadEnvWithoutOverwrite(file);
         }
 
-        const config = this.schema.parse();
-
-        if (config.INSTALLATION_TYPE.toLowerCase() === "default") {
-
-            const hasStandardConfig = !!config.WEB_SERVER_USER &&
-                                      !!config.CAKE_BIN &&
-                                      !!config.GPG_SERVER_PRIVATE_KEY &&
-                                      !!config.GPG_SERVER_PUBLIC_KEY &&
-                                      !!config.PASSBOLT_CONFIG_FILE;
-
-            if (!hasStandardConfig) {
-                console.error("The standard configuration for INSTALLATION_TYPE 'default' is not complete.");
-                process.exit(1);
-            }
-        } else if (config.INSTALLATION_TYPE.toLowerCase() === "docker") {
-
-            const hasDockerConfig = !!config.DOCKER_PASSBOLT_CONTAINER && !!config.DOCKER_DB_CONTAINER;
-
-            if (config.DOCKER_DB_TYPE?.toLowerCase() !== "mysql" && config.DOCKER_DB_TYPE?.toLowerCase() !== "postgres") {
-                console.error("The DOCKER_DB_TYPE has to be either 'mysql' or 'postgres'.");
-                process.exit(1);
-            }
-
-            if (config.DOCKER_LIVE_ENV?.toLowerCase() === "false") {
-                if (!config.DOCKER_POSSBOLT_ENV || !config.DOCKER_DB_ENV) {
-                    console.error("The DOCKER_POSSBOLT_ENV and DOCKER_DB_ENV have to be set when DOCKER_LIVE_ENV is 'false'.");
-                    process.exit(1);
-                }
-            } else if (config.DOCKER_LIVE_ENV?.toLowerCase() !== "true") {
-                console.error("The DOCKER_LIVE_ENV has to be either 'true' or 'false'.");
-                process.exit(1);
-            }
-
-            if (!hasDockerConfig) {
-                console.error("The docker configuration for INSTALLATION_TYPE 'docker' is not complete.");
-                process.exit(1);
-            }
-        } else {
-            console.error("The INSTALLATION_TYPE has to be either 'default' or 'docker'.");
-            process.exit(1);
-        }
-        this.config = config;
-        return this.config;
+        return this.config = this.schema.parse();
     }
 
 }

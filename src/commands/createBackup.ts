@@ -1,7 +1,7 @@
 import { CLICMD, type CLICMDExecMeta } from "@cleverjs/cli";
-import { ConfigHandler } from "../configHandler";
-import { BackupManager } from "../manager";
-import { S3Service } from "../s3-service";
+import { BackupManager } from "../manager.js";
+import { S3Service } from "../s3-service.js";
+import { Utils } from "../utils.js";
 
 
 export class CreateBackupCMD extends CLICMD {
@@ -11,11 +11,7 @@ export class CreateBackupCMD extends CLICMD {
 
     async run(args: string[], meta: CLICMDExecMeta) {
         
-        const config = ConfigHandler.getConfig();
-        if (!config) {
-            console.error("Error: Configuration not loaded.");
-            process.exit(1);
-        }
+        const config = await Utils.parseDefaultArgs(args);
 
         const s3 = new S3Service({
             endpoint: config.S3_ENDPOINT,

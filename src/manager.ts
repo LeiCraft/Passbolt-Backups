@@ -1,6 +1,7 @@
 import { Uint64 } from "low-level";
 import { BackupArchive } from "./archive";
-import { BackupFetcher } from "./fetcher";
+import { DockerAPI } from "./apis/docker";
+import { LinuxShellAPI } from "./apis/linux-shell";
 
 export class BackupManager {
 
@@ -14,13 +15,15 @@ export class BackupManager {
         dbEnvPath: string;
     } | { liveEnv: true; })) {
 
-        const dbDump = await BackupFetcher.getDockerDBDump(options.dbContainerName, options.dbType);
+        const dockerapi = new DockerAPI();
+
+        const dbDump = await dockerapi.getDockerDBDump(options.dbContainerName, options.dbType);
         if (!dbDump) {
             console.error("Error getting the database dump.");
             process.exit(1);
         }
 
-        const serverKeys = await BackupFetcher.getDockerServerKeys(options.passboltContainerName);
+        const serverKeys = await dockerapi.getDockerServerKeys(options.passboltContainerName);
         if (!serverKeys) {
             console.error("Error getting the server keys.");
             process.exit(1);
@@ -30,11 +33,11 @@ export class BackupManager {
         let dbEnv: string | null;
 
         if (options.liveEnv) {
-            passboltEnv = await BackupFetcher.getDockerEnv(options.passboltContainerName);
-            dbEnv = await BackupFetcher.getDockerEnv(options.dbContainerName);
+            passboltEnv = await dockerapi.getDockerEnv(options.passboltContainerName);
+            dbEnv = await dockerapi.getDockerEnv(options.dbContainerName);
         } else {
-            passboltEnv = await BackupFetcher.getFile(options.passboltEnvPath);
-            dbEnv = await BackupFetcher.getFile(options.dbEnvPath);
+            passboltEnv = await LinuxShellAPI.getFile(options.passboltEnvPath);
+            dbEnv = await LinuxShellAPI.getFile(options.dbEnvPath);
         }
 
         if (!passboltEnv) {
