@@ -1,3 +1,43 @@
+async function readDockerExecStream(response: Response) {
+    if (!response.body) throw new Error("Response body is null");
+
+    const reader = response.body.getReader();
+    let buffer = new Uint8Array(0);
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // Append new data to buffer
+        const newBuffer = new Uint8Array(buffer.length + value.length);
+        newBuffer.set(buffer);
+        newBuffer.set(value, buffer.length);
+        buffer = newBuffer;
+
+        // Process frames
+        while (buffer.length >= 8) {
+            // Read header
+            const streamType = buffer[0]; // 0 = stdin, 1 = stdout, 2 = stderr
+            const frameSize = new DataView(buffer.buffer, buffer.byteOffset + 4, 4).getUint32(0, false); // Big endian
+
+            // Check if the full frame is available
+            if (buffer.length < 8 + frameSize) break;
+
+            // Extract payload
+            const payload = buffer.slice(8, 8 + frameSize);
+            buffer = buffer.slice(8 + frameSize); // Remove processed data from buffer
+
+            // Output based on stream type
+            const output = new TextDecoder().decode(payload);
+            if (streamType === 1) {
+                console.log("[stdout]:", output);
+            } else if (streamType === 2) {
+                console.error("[stderr]:", output);
+            }
+        }
+    }
+}
+
 
 export class DockerAPI {
 
@@ -77,35 +117,7 @@ export class DockerAPI {
         // // Explicitly decode as UTF-8 and remove non-printable characters
         // return cleanedBuffer.toString("utf-8").replace(/\uFFFD/g, ""); // Remove unknown characters
 
-
-        const reader = startExec.body?.getReader();
-        if (!reader) return;
-
-        const chunks: Uint8Array[] = [];
-        const decoder = new TextDecoder();
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            // Strip Docker's 8-byte headers
-            let i = 0;
-            while (i < value.length) {
-                const streamType = value[i]; // 1 = stdout, 2 = stderr
-                const frameSize = (value[i + 4] << 24) | (value[i + 5] << 16) | (value[i + 6] << 8) | value[i + 7]; // Extract frame length
-                i += 8; // Skip header
-
-                if (i + frameSize > value.length) break; // Safety check
-
-                chunks.push(value.slice(i, i + frameSize)); // Store the chunk
-                i += frameSize;
-            }
-        }
-
-        // Decode the entire buffer in one go (more efficient)
-        const output = decoder.decode(new Uint8Array(chunks.reduce((acc, chunk) => acc.concat(Array.from(chunk)), [])));
-
-        return output;
+        console.log(readDockerExecStream(startExec));
     }
 
     /*private static async runInDocker(containerName: string, cmd: string, prefix = "") {
