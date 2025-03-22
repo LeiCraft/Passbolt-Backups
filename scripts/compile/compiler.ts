@@ -12,7 +12,7 @@ class CompilerCommand {
     public sourcemap = true;
     public minify = true;
     public entrypoint = "./src/index.ts";
-    public outfile = "./build/bin/passbolt-s3-backups";
+    public outfile = "./build/bin/passbolt-backups";
     public platform: PlatformArg = "auto";
     public env: NodeJS.ProcessEnv = {};
     private additionalArgs: string[] = [];

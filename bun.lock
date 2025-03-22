@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "passbolt-s3-backups",
+      "name": "passbolt-backups",
       "dependencies": {
         "@cleverjs/cli": "^1.1.8",
         "@date-fns/utc": "^2.1.0",

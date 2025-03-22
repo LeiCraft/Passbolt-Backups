@@ -1,5 +1,5 @@
 {
-  "name": "passbolt-s3-backups",
+  "name": "passbolt-backups",
   "module": "index.ts",
   "type": "module",
   "private": true,
@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit --skipLibCheck --esModuleInterop --target esnext --moduleResolution bundler --module esnext --strict ./src/**/*.ts",
     "debug": "bun run ./src/index.ts",
     "compile": "bun run ./scripts/compile",
-    "start": "./build/bin/passbolt-s3-backups"
+    "start": "./build/bin/passbolt-backups"
   },
   "devDependencies": {
     "@types/bun": "latest"

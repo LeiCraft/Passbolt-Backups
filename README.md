@@ -1,1 +1,1 @@
-# Passbolt-S3-Backups
+# Passbolt-Backups
