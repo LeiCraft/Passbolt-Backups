@@ -12,7 +12,7 @@ export class BackupManager {
         liveEnv: false;
         passboltEnvPath: string;
         dbEnvPath: string;
-    } | { vliveEnv: true; })) {
+    } | { liveEnv: true; })) {
 
         const dbDump = await BackupFetcher.getDockerDBDump(options.dbContainerName, options.dbType);
         if (!dbDump) {
@@ -29,12 +29,12 @@ export class BackupManager {
         let passboltEnv: string | null;
         let dbEnv: string | null;
 
-        if (!(options as any).liveEnv) {
-            passboltEnv = await BackupFetcher.getFile((options as any).passboltEnvPath);
-            dbEnv = await BackupFetcher.getFile((options as any).dbEnvPath);
-        } else {
+        if (options.liveEnv) {
             passboltEnv = await BackupFetcher.getDockerEnv(options.passboltContainerName);
             dbEnv = await BackupFetcher.getDockerEnv(options.dbContainerName);
+        } else {
+            passboltEnv = await BackupFetcher.getFile(options.passboltEnvPath);
+            dbEnv = await BackupFetcher.getFile(options.dbEnvPath);
         }
 
         if (!passboltEnv) {

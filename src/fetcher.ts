@@ -45,7 +45,7 @@ export class BackupFetcher {
     }
 
     static async getDockerEnv(containerName: string) {
-        const result =  await Shell.runInDocker(containerName, "printenv");
+        const result = await Shell.runInDocker(containerName, "printenv");
         if (result.code === 0) {
             return result.data;
         }

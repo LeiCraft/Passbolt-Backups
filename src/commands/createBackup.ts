@@ -39,7 +39,8 @@ export class CreateBackupCMD extends CLICMD {
                     passboltEnvPath: config.DOCKER_POSSBOLT_ENV,
                     dbContainerName: config.DOCKER_DB_CONTAINER,
                     dbType: config.DOCKER_DB_TYPE,
-                    dbEnvPath: config.DOCKER_DB_ENV
+                    dbEnvPath: config.DOCKER_DB_ENV,
+                    liveEnv: config.DOCKER_LIVE_ENV
                 } as any);
 
                 await s3.uploadBackup(archive);
@@ -48,5 +49,5 @@ export class CreateBackupCMD extends CLICMD {
             }
         }
 
-    }   
+    }
 }
