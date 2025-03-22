@@ -6,11 +6,13 @@ export class BackupManager {
 
     static async createDockerBackup(options: {
         passboltContainerName: string;
-        passboltEnvPath: string;
         dbContainerName: string;
         dbType: "mysql" | "postgres";
+    } & ({
+        liveEnv: false;
+        passboltEnvPath: string;
         dbEnvPath: string;
-    }) {
+    } | { vliveEnv: true; })) {
 
         const dbDump = await BackupFetcher.getDockerDBDump(options.dbContainerName, options.dbType);
         if (!dbDump) {
@@ -24,15 +26,23 @@ export class BackupManager {
             process.exit(1);
         }
 
-        const passboltEnv = await BackupFetcher.getFile(options.passboltEnvPath);
-        if (!passboltEnv) {
-            console.error("Error getting the passbolt env file.");
-            process.exit(1);
+        let passboltEnv: string | null;
+        let dbEnv: string | null;
+
+        if (!(options as any).liveEnv) {
+            passboltEnv = await BackupFetcher.getFile((options as any).passboltEnvPath);
+            dbEnv = await BackupFetcher.getFile((options as any).dbEnvPath);
+        } else {
+            passboltEnv = await BackupFetcher.getDockerEnv(options.passboltContainerName);
+            dbEnv = await BackupFetcher.getDockerEnv(options.dbContainerName);
         }
 
-        const dbEnv = await BackupFetcher.getFile(options.dbEnvPath);
+        if (!passboltEnv) {
+            console.error("Error getting the passbolt env configuration.");
+            process.exit(1);
+        }
         if (!dbEnv) {
-            console.error("Error getting the database env file.");
+            console.error("Error getting the database env configuration.");
             process.exit(1);
         }
 

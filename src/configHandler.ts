@@ -58,6 +58,7 @@ export class ConfigHandler {
         .add("DOCKER_DB_TYPE", false)
         .add("DOCKER_POSSBOLT_ENV", false)
         .add("DOCKER_DB_ENV", false)
+        .add("DOCKER_LIVE_ENV", false)
 
         .add("ENCRYPTION_PASSPHRASE", false);
         
@@ -110,13 +111,20 @@ export class ConfigHandler {
             }
         } else if (config.INSTALLATION_TYPE.toLowerCase() === "docker") {
 
-            const hasDockerConfig = !!config.DOCKER_PASSBOLT_CONTAINER &&
-                                    !!config.DOCKER_DB_CONTAINER &&
-                                    !!config.DOCKER_POSSBOLT_ENV &&
-                                    !!config.DOCKER_DB_ENV;
+            const hasDockerConfig = !!config.DOCKER_PASSBOLT_CONTAINER && !!config.DOCKER_DB_CONTAINER;
 
             if (config.DOCKER_DB_TYPE?.toLowerCase() !== "mysql" && config.DOCKER_DB_TYPE?.toLowerCase() !== "postgres") {
                 console.error("The DOCKER_DB_TYPE has to be either 'mysql' or 'postgres'.");
+                process.exit(1);
+            }
+
+            if (config.DOCKER_LIVE_ENV?.toLowerCase() === "false") {
+                if (!config.DOCKER_POSSBOLT_ENV || !config.DOCKER_DB_ENV) {
+                    console.error("The DOCKER_POSSBOLT_ENV and DOCKER_DB_ENV have to be set when DOCKER_LIVE_ENV is 'false'.");
+                    process.exit(1);
+                }
+            } else if (config.DOCKER_LIVE_ENV?.toLowerCase() !== "true") {
+                console.error("The DOCKER_LIVE_ENV has to be either 'true' or 'false'.");
                 process.exit(1);
             }
 

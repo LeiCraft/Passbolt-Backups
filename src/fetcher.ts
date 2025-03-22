@@ -44,6 +44,14 @@ export class BackupFetcher {
         return null;
     }
 
+    static async getDockerEnv(containerName: string) {
+        const result =  await Shell.runInDocker(containerName, "printenv");
+        if (result.code === 0) {
+            return result.data;
+        }
+        return null;
+    }
+
     static async getFile(path: string) {
         const result = await Shell.run(`cat ${path}`);
         if (result.code === 0) {
