@@ -67,6 +67,8 @@ class ConfigSchema<T extends ConfigSchemaSettings = {}> {
                 continue;
             }
 
+            (result[key] as any) = process.env[key];
+
             if (settings.type && !settings.type.includes(process.env[key].toLowerCase())) {
                 console.error(`The environment variable ${key} has to be one of the following: ${settings.type.join(", ")}`);
                 process.exit(1);
@@ -83,8 +85,6 @@ class ConfigSchema<T extends ConfigSchemaSettings = {}> {
                     }
                 }
             }
-
-            (result[key] as any) = process.env[key];
         }
         return result;
     }
