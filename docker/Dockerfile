@@ -1,0 +1,1 @@
+FROM passbolt/passbolt:latest-ce
