@@ -1,8 +1,10 @@
-async function readDockerExecStream(response: Response) {
+async function readDockerRawStream(response: Response): Promise<{ stdout: string; stderr: string }> {
     if (!response.body) throw new Error("Response body is null");
 
     const reader = response.body.getReader();
     let buffer = new Uint8Array(0);
+    let stdout = "";
+    let stderr = "";
 
     while (true) {
         const { done, value } = await reader.read();
@@ -27,17 +29,18 @@ async function readDockerExecStream(response: Response) {
             const payload = buffer.slice(8, 8 + frameSize);
             buffer = buffer.slice(8 + frameSize); // Remove processed data from buffer
 
-            // Output based on stream type
+            // Decode and store the output
             const output = new TextDecoder().decode(payload);
             if (streamType === 1) {
-                console.log("[stdout]:", output);
+                stdout += output;
             } else if (streamType === 2) {
-                console.error("[stderr]:", output);
+                stderr += output;
             }
         }
     }
-}
 
+    return { stdout: stdout.trimEnd(), stderr: stderr.trimEnd() };
+}
 
 export class DockerAPI {
 
@@ -107,17 +110,8 @@ export class DockerAPI {
         if (startExec.status !== 200) {
             throw new Error("Error starting exec instance");
         }
-        
-        // const rawOutput = await startExec.arrayBuffer();
-        // const buffer = Buffer.from(rawOutput);
 
-        // // Strip the first 8 bytes (Docker's frame header)
-        // const cleanedBuffer = buffer.subarray(8);
-
-        // // Explicitly decode as UTF-8 and remove non-printable characters
-        // return cleanedBuffer.toString("utf-8").replace(/\uFFFD/g, ""); // Remove unknown characters
-
-        console.log(readDockerExecStream(startExec));
+        return (await readDockerRawStream(startExec)).stdout;
     }
 
     /*private static async runInDocker(containerName: string, cmd: string, prefix = "") {
