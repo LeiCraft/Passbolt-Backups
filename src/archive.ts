@@ -1,6 +1,7 @@
 import { formatDate } from "date-fns/format";
 import { BE, Container, DataEncoder } from "flexbuf";
 import { Uint, Uint16, Uint64 } from "low-level";
+import { AES256 } from "./crypto";
 
 type FilePath = string;
 
@@ -26,26 +27,6 @@ export class SingleFile extends Container {
 
 }
 
-export class BackupArchiveHeader extends Container {
-
-    constructor(
-        readonly time: Uint64,
-        public encrypted: boolean = false,
-        readonly version: Uint16 = Uint16.from(0)
-    ) {super()}
-
-    protected static fromDict(obj: Dict<any>) {
-        return new BackupArchive(obj.time, obj.encrypted, obj.version);
-    }
-
-    protected static readonly encodingSettings: readonly DataEncoder[] = [
-        BE(Uint16, "version"),
-        BE.Bool("encrypted"),
-        BE(Uint64, "time")
-    ]
-
-}
-
 export class BackupArchiveContent extends Container {
     constructor(
         readonly files: SingleFile[],
@@ -60,27 +41,13 @@ export class BackupArchiveContent extends Container {
     ]
 }
 
-export class BackupArchive extends BackupArchiveHeader {
+export class BackupArchiveHeader extends Container {
 
     constructor(
-        time: Uint64,
-        readonly content: BackupArchiveContent,
-        encrypted: boolean,
-        version: Uint16 = Uint16.from(0)
-    ) {super(time, encrypted, version)}
+        readonly time: Uint64,
+        readonly version: Uint16 = Uint16.from(0)
+    ) {super()}
 
-    static fromFileList(time: Uint64, files: FileList) {
-        return new BackupArchive(
-            time,
-            new BackupArchiveContent(
-                Object.entries(files).map(([path, data]) => new SingleFile(
-                    path,
-                    data instanceof Uint ? data : Uint.from(data, "utf8")
-                ))
-            ),
-            false,
-        );
-    }
 
     public getDateString() {
         return `${formatDate(Number(this.time.toBigInt()), "yyyy-MM-dd_HH-mm-ss")}`;
@@ -90,8 +57,89 @@ export class BackupArchive extends BackupArchiveHeader {
         return `passbolt-${this.getDateString()}.backup`;
     }
 
+
     protected static fromDict(obj: Dict<any>) {
-        return new BackupArchive(obj.time, obj.content, obj.encrypted, obj.version);
+        return new BackupArchiveHeader(obj.time, obj.version);
+    }
+
+    protected static readonly encodingSettings: readonly DataEncoder[] = [
+        BE(Uint16, "version"),
+        BE(Uint64, "time")
+    ]
+
+}
+
+export class BackupArchive extends BackupArchiveHeader {
+
+    constructor(
+        time: Uint64,
+        readonly content: BackupArchiveContent,
+        version: Uint16 = Uint16.from(0)
+    ) {super(time, version)}
+
+    static fromFileList(time: Uint64, files: FileList) {
+        return new BackupArchive(
+            time,
+            new BackupArchiveContent(
+                Object.entries(files).map(([path, data]) => new SingleFile(
+                    path,
+                    data instanceof Uint ? data : Uint.from(data, "utf8")
+                ))
+            )
+        );
+    }
+
+    public toHeader() {
+        return new BackupArchiveHeader(
+            this.time,
+            this.version
+        );
+    }
+
+
+    /**
+     * Encrypts an backup archive
+     * @param passphrase The passphrase to encrypt the backup archive
+     */
+    public encrypt(passphrase: string) {
+        const encodedContent = this.content.encodeToHex();
+        const encryptedContent = AES256.encrypt(encodedContent, passphrase);
+        return new RawBackupArchive(this.toHeader(), true, encryptedContent);
+    }
+    
+    /**
+     * Encrypts an backup archive
+     * @param data The encrypted data
+     * @param passphrase The passphrase to decrypt the data. If data is not encrypted, this parameter is ignored.
+     */
+    static fromEncrypted(data: Uint, passphrase?: string) {
+        const raw = RawBackupArchive.fromDecodedHex(data);
+        if (!raw) return null;
+
+        let decryptedRawContent: Uint;
+
+        if (raw.encrypted) {
+            if (!passphrase) return null;
+            
+            decryptedRawContent = AES256.decrypt(raw.content, passphrase) as Uint;
+            if (!decryptedRawContent) return null;
+        } else {
+            decryptedRawContent = raw.content;
+        }
+
+        const content = BackupArchiveContent.fromDecodedHex(decryptedRawContent);
+        if (!content) return null;
+        return BackupArchive.fromHeaderAndContent(raw.header, content);
+    }
+
+
+    static fromHeaderAndContent(header: BackupArchiveHeader, content: BackupArchiveContent) {
+        return new BackupArchive(header.time, content, header.version);
+    }
+
+
+    protected static fromDict(obj: Dict<any>) {
+        return new BackupArchive(obj.time, obj.content, obj.version);
     }
 
     protected static readonly encodingSettings: readonly DataEncoder[] = [
@@ -99,4 +147,23 @@ export class BackupArchive extends BackupArchiveHeader {
         BE.Object("content", BackupArchiveContent)
     ]
 
+}
+
+
+export class RawBackupArchive extends Container {
+    constructor(
+        readonly header: BackupArchiveHeader,
+        readonly encrypted: boolean,
+        readonly content: Uint
+    ) {super()}
+
+    protected static fromDict(obj: Dict<any>) {
+        return new RawBackupArchive(obj.header, obj.encrypted, obj.content);
+    }
+
+    protected static encodingSettings: readonly DataEncoder[] = [
+        BE.Object("header", BackupArchiveHeader),
+        BE.Bool("encrypted"),
+        BE.Custom("content", {type: "prefix", val: "unlimited"})
+    ]
 }

@@ -39,6 +39,10 @@ export class CreateBackupCMD extends CLICMD {
                     liveEnv: config.DOCKER_LIVE_ENV
                 } as any);
 
+                if (config.ENCRYPTION_PASSPHRASE) {
+                    archive.encrypt(config.ENCRYPTION_PASSPHRASE);
+                }
+
                 await s3.uploadBackup(archive);
 
                 break;
