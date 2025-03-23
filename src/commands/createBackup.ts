@@ -2,6 +2,7 @@ import { CLICMD, type CLICMDExecMeta } from "@cleverjs/cli";
 import { BackupManager } from "../manager.js";
 import { S3Service } from "../s3-service.js";
 import { Utils } from "../utils.js";
+import type { RawBackupArchive } from "../archive.js";
 
 
 export class CreateBackupCMD extends CLICMD {
@@ -39,11 +40,15 @@ export class CreateBackupCMD extends CLICMD {
                     liveEnv: config.DOCKER_LIVE_ENV
                 } as any);
 
+                let rawArchive: RawBackupArchive;
+
                 if (config.ENCRYPTION_PASSPHRASE) {
-                    archive.encrypt(config.ENCRYPTION_PASSPHRASE);
+                    rawArchive =  archive.encrypt(config.ENCRYPTION_PASSPHRASE);
+                } else {
+                    rawArchive = archive.encodeToHex();
                 }
 
-                await s3.uploadBackup(archive);
+                await s3.uploadBackup(rawArchive);
 
                 break;
             }

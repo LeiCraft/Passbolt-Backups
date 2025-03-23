@@ -96,6 +96,10 @@ export class BackupArchive extends BackupArchiveHeader {
         );
     }
 
+    public toRaw() {
+        return new RawBackupArchive(this.toHeader(), false, this.content.encodeToHex());
+    }
+
 
     /**
      * Encrypts an backup archive
