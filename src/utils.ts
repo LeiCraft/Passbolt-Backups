@@ -4,7 +4,7 @@ import { ConfigHandler } from "./configHandler.js";
 
 export class Utils {
 
-    static async parseDefaultArgs(args: string[]) {
+    static async parseDefaultArgs(args: string[], parent_args: string[] = []) {
 
         const flagParser = new CMDFlagsParser({
             "--config": new CMDFlag("string", "Path to the configuration file", false, null),
@@ -18,7 +18,10 @@ export class Utils {
         const flags = parsingResult.result;
         args = parsingResult.discarded;
 
-        return await ConfigHandler.parseConfigFile(flags["--config"]);
+        return {
+            args,
+            config: await ConfigHandler.parseConfigFile(flags["--config"])
+        };
     }
     
 }

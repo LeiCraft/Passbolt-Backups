@@ -12,8 +12,10 @@ export class CreateBackupCMD extends CLICMD {
 
     async run(args: string[], meta: CLICMDExecMeta) {
         
-        const config = await Utils.parseDefaultArgs(args);
-
+        const result = await Utils.parseDefaultArgs(args);
+        const config = result.config;
+        args = result.args;
+        
         const s3 = new S3Service({
             endpoint: config.S3_ENDPOINT,
             accessKeyId: config.S3_ACCESS_KEY_ID,
