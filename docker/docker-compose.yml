@@ -11,7 +11,7 @@ services:
       - database_volume:/var/lib/mysql
 
   passbolt:
-    image: ghcr.io/leicraft/passbolt:latest
+    image: ghcr.io/leicraft/passbolt-with-backups:latest
     restart: unless-stopped
     depends_on:
       - db
