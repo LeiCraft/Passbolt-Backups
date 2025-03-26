@@ -11,7 +11,7 @@ services:
       - database_volume:/var/lib/mysql
 
   passbolt:
-    image: ghcr.io/leicraft/passbolt-with-backups:latest
+    image: ghcr.io/leicraft/passbolt-with-backups:latest-mysql
     restart: unless-stopped
     depends_on:
       - db
@@ -28,13 +28,8 @@ services:
       S3_BUCKET: ""
       S3_BASE_PATH: ""
 
-      DOCKER_PASSBOLT_CONTAINER: "passbolt"
-      DOCKER_DB_CONTAINER: "db"
-      DOCKER_DB_TYPE: "mysql"
-
       ENCRYPTION_PASSPHRASE: ""
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
       - gpg_volume:/etc/passbolt/gpg
       - jwt_volume:/etc/passbolt/jwt
     command:
@@ -49,9 +44,6 @@ services:
     ports:
       - 80:80
       - 443:443
-    #Alternatively for non-root images:
-    # - 80:8080
-    # - 443:4433
 
 volumes:
   database_volume:

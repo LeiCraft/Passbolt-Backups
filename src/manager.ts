@@ -69,30 +69,7 @@ export class BackupManager {
             files["db/dump.sql"] = dbDump;
             files["env/db.env"] = dbEnv;
         }
-
-        const serverKeys = await dockerapi.getDockerServerKeys(options.passboltContainerName);
-        if (!serverKeys) {
-            console.error("Error getting the server keys.");
-            process.exit(1);
-        }
-
-        if (options.liveEnv) {
-            passboltEnv = await dockerapi.getDockerEnv(options.passboltContainerName);
-        } else {
-            passboltEnv = await LinuxShellAPI.getFile(options.passboltEnvPath);
-        }
-
-        if (!passboltEnv) {
-            console.error("Error getting the passbolt env configuration.");
-            process.exit(1);
-        }
-
-
-        files["gpg/serverkey_private.asc"] = serverKeys.privateKey;
-        files["gpg/serverkey.asc"] = serverKeys.publicKey;
-        files["env/passbolt.env"] = passboltEnv;
-
-        return BackupArchive.fromFileList(Uint64.from(Date.now()), files);;
+        
 
     }
 

@@ -129,16 +129,5 @@ export class DockerAPI {
         }
     }
 
-    async getDockerServerKeys(containerName: string) {
-        return {
-            privateKey: await this.exec(containerName, "cat /etc/passbolt/gpg/serverkey_private.asc"),
-            publicKey: await this.exec(containerName, "cat /etc/passbolt/gpg/serverkey.asc")
-        };
-    }
-
-    async getDockerEnv(containerName: string) {
-        return await this.exec(containerName, "printenv");
-    }
-
 }
 

@@ -1,5 +1,6 @@
 import { S3Client } from "bun";
-import type { RawBackupArchive } from "./archive";
+import { RawBackupArchive } from "./archive";
+import { Uint } from "low-level";
 
 export class S3Service {
 
@@ -39,6 +40,12 @@ export class S3Service {
     }
 
     async uploadBackup(rawBackup: RawBackupArchive) {
-        return await this.client.write(this.basePath + rawBackup.header.getArchiveName(), rawBackup.encodeToHex().getRaw());
+        const file = this.client.file(this.basePath + rawBackup.header.getArchiveName());
+        return await file.write(rawBackup.encodeToHex().getRaw());
+    }
+
+    async downloadBackup(name: string) {
+        const file = await this.client.file(this.basePath + name).bytes();
+        return RawBackupArchive.fromDecodedHex(Uint.from(file));
     }
 }

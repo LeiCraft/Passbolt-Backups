@@ -11,7 +11,7 @@ services:
       - database_volume:/var/lib/postgresql/data
 
   passbolt:
-    image: ghcr.io/leicraft/passbolt-with-backups:latest
+    image: ghcr.io/leicraft/passbolt-with-backups:latest-postgres
     restart: unless-stopped
     tty: true
     depends_on:
@@ -30,10 +30,6 @@ services:
       S3_BUCKET: ""
       S3_BASE_PATH: ""
 
-      DOCKER_PASSBOLT_CONTAINER: "passbolt"
-      DOCKER_DB_CONTAINER: "db"      
-      DOCKER_DB_TYPE: "postgres"
-
       ENCRYPTION_PASSPHRASE: ""
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -48,9 +44,6 @@ services:
     ports:
       - 80:80
       - 443:443
-    #Alternatively for non-root images:
-    # - 80:8080
-    # - 443:4433
 
 volumes:
   database_volume:

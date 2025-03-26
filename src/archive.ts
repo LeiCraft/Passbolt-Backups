@@ -3,9 +3,9 @@ import { BE, Container, DataEncoder } from "flexbuf";
 import { Uint, Uint16, Uint64 } from "low-level";
 import { AES256 } from "./crypto";
 
-type FilePath = string;
+export type FilePath = string;
 
-type FileList = {
+export type FileList = {
     [key: FilePath]: Uint | string;
 }
 
