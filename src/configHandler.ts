@@ -75,7 +75,7 @@ class ConfigSchema<T extends ConfigSchemaSettings = {}> {
             }
 
             if (settings.dependencies) {
-                const dependencies = settings.dependencies[process.env[key]];
+                const dependencies = settings.dependencies[process.env[key]] || settings.dependencies["any"];
                 if (!dependencies) continue;
 
                 for (const dep of dependencies) {
@@ -102,7 +102,7 @@ export class ConfigHandler {
 
         .add("INSTALLATION_TYPE", true, ["default", "docker"], {
             "default": ["WEB_SERVER_USER", "CAKE_BIN", "GPG_SERVER_PRIVATE_KEY", "GPG_SERVER_PUBLIC_KEY", "PASSBOLT_CONFIG_FILE"],
-            "docker": ["DOCKER_PASSBOLT_CONTAINER", "DOCKER_DB_CONTAINER", "DOCKER_DB_TYPE", "DOCKER_LIVE_ENV"]
+            "docker": ["DOCKER_PASSBOLT_CONTAINER", "DOCKER_LIVE_ENV"]
         })
 
         .add("WEB_SERVER_USER", false)
@@ -113,10 +113,10 @@ export class ConfigHandler {
 
         .add("DOCKER_PASSBOLT_CONTAINER", false)
         .add("DOCKER_DB_CONTAINER", false)
-        .add("DOCKER_DB_TYPE", false, ["mysql", "postgres"])
+        .add("DOCKER_DB_TYPE", false, ["mysql", "postgres"], {"any": [ "DOCKER_DB_CONTAINER" ]})
 
         .add("DOCKER_LIVE_ENV", false, ["true", "false"], {
-            "false": ["DOCKER_POSSBOLT_ENV", "DOCKER_DB_ENV"]
+            "false": ["DOCKER_POSSBOLT_ENV"]
         })
         .add("DOCKER_POSSBOLT_ENV", false)
         .add("DOCKER_DB_ENV", false)
@@ -124,7 +124,9 @@ export class ConfigHandler {
         .add("ENCRYPTION_PASSPHRASE", false);
         
 
-    private static config: ConfigLike<typeof this.schema.schema> | null = null;
+    private static config: (ConfigLike<typeof this.schema.schema> & {
+        DOCKER_USE_DB: boolean;
+    }) | null = null;
 
     /** You have to call {@link ConfigHandler.parseConfigFile} before trying to access the config. */
     static getConfig() {
@@ -154,7 +156,17 @@ export class ConfigHandler {
             await this.loadEnvWithoutOverwrite(file);
         }
 
-        return this.config = this.schema.parse();
+        const config = {...this.schema.parse(), DOCKER_USE_DB: false};
+
+        if (config.INSTALLATION_TYPE === "docker" && config.DOCKER_DB_TYPE) {
+            config.DOCKER_USE_DB = true;
+            if (!config.DOCKER_LIVE_ENV && !config.DOCKER_DB_ENV) {
+                console.error("The environment variable DOCKER_DB_ENV is required when DOCKER_LIVE_ENV is set to false and DOCKER_USE_DB is set.");
+                process.exit(1);
+            }
+        }
+
+        return this.config = config;
     }
 
 }

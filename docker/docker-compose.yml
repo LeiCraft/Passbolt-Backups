@@ -21,6 +21,10 @@ services:
       DATASOURCES_DEFAULT_USERNAME: "passbolt"
       DATASOURCES_DEFAULT_PASSWORD: "P4ssb0lt"
       DATASOURCES_DEFAULT_DATABASE: "passbolt"
+
+      DOCKER_PASSBOLT_CONTAINER: "passbolt"
+      DOCKER_DB_CONTAINER: "db"
+      DOCKER_DB_TYPE: "mysql"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - gpg_volume:/etc/passbolt/gpg

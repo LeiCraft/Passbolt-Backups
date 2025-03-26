@@ -32,23 +32,18 @@ export class CreateBackupCMD extends CLICMD {
                 break;
             }
             case "docker": {
-
+                
                 const archive = await BackupManager.createDockerBackup({
+                    withDB: config.DOCKER_USE_DB,
                     passboltContainerName: config.DOCKER_PASSBOLT_CONTAINER,
                     passboltEnvPath: config.DOCKER_POSSBOLT_ENV,
                     dbContainerName: config.DOCKER_DB_CONTAINER,
                     dbType: config.DOCKER_DB_TYPE,
                     dbEnvPath: config.DOCKER_DB_ENV,
-                    liveEnv: config.DOCKER_LIVE_ENV
+                    liveEnv: config.DOCKER_LIVE_ENV === "true"
                 } as any);
 
-                let rawArchive: RawBackupArchive;
-
-                if (config.ENCRYPTION_PASSPHRASE) {
-                    rawArchive =  archive.encrypt(config.ENCRYPTION_PASSPHRASE);
-                } else {
-                    rawArchive = archive.encodeToHex();
-                }
+                const rawArchive = config.ENCRYPTION_PASSPHRASE ? archive.encrypt(config.ENCRYPTION_PASSPHRASE) : archive.toRaw();
 
                 await s3.uploadBackup(rawArchive);
 

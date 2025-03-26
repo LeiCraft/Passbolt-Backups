@@ -3,24 +3,71 @@ import { BackupArchive } from "./archive";
 import { DockerAPI } from "./apis/docker";
 import { LinuxShellAPI } from "./apis/linux-shell";
 
+namespace BackupManagerTypes {
+    namespace Docker {
+        // Base type without DB
+        export interface Base {
+            passboltContainerName: string;
+            withDB: false;
+            liveEnv: boolean;
+        }
+
+        // Base type with DB (strict enforcement of db properties)
+        export interface BaseWithDB {
+            passboltContainerName: string;
+            withDB: true;
+            dbContainerName: string;
+            dbType: "mysql" | "postgres";
+        }
+
+        // Live Environment - Applies to both Base and BaseWithDB
+        export type WithLiveEnv<T extends Base | BaseWithDB> = T & {
+            liveEnv: true;
+            passboltEnvPath: undefined;
+        } & (T extends BaseWithDB ? { dbEnvPath: undefined } : {});
+
+        // Environment Paths - Applies to both Base and BaseWithDB
+        export type WithEnvPaths<T extends Base | BaseWithDB> = T & {
+            liveEnv: false;
+            passboltEnvPath: string;
+        } & (T extends BaseWithDB ? { dbEnvPath: string } : {});
+    }
+    // Union type covering all possible valid structures
+    export type Docker =
+        | Docker.WithLiveEnv<Docker.Base>
+        | Docker.WithLiveEnv<Docker.BaseWithDB>
+        | Docker.WithEnvPaths<Docker.Base>
+        | Docker.WithEnvPaths<Docker.BaseWithDB>;
+}
+
 export class BackupManager {
 
-    static async createDockerBackup(options: {
-        passboltContainerName: string;
-        dbContainerName: string;
-        dbType: "mysql" | "postgres";
-    } & ({
-        liveEnv: false;
-        passboltEnvPath: string;
-        dbEnvPath: string;
-    } | { liveEnv: true; })) {
+    static async createDockerBackup(options: BackupManagerTypes.Docker) {
 
         const dockerapi = new DockerAPI();
+        
+        let passboltEnv: string | null;
+        let dbEnv: string | null;
 
-        const dbDump = await dockerapi.getDockerDBDump(options.dbContainerName, options.dbType);
-        if (!dbDump) {
-            console.error("Error getting the database dump.");
-            process.exit(1);
+        const files: Record<string, any> = {};
+
+        if (options.withDB) {
+            const dbDump = await dockerapi.getDockerDBDump(options.dbContainerName, options.dbType);
+            if (!dbDump) {
+                console.error("Error getting the database dump.");
+                process.exit(1);
+            }
+            if (options.liveEnv) {
+                dbEnv = await dockerapi.getDockerEnv(options.dbContainerName);
+            } else {
+                dbEnv = await LinuxShellAPI.getFile(options.dbEnvPath);
+            }
+            if (!dbEnv) {
+                console.error("Error getting the database env configuration.");
+                process.exit(1);
+            }
+            files["db/dump.sql"] = dbDump;
+            files["env/db.env"] = dbEnv;
         }
 
         const serverKeys = await dockerapi.getDockerServerKeys(options.passboltContainerName);
@@ -29,35 +76,23 @@ export class BackupManager {
             process.exit(1);
         }
 
-        let passboltEnv: string | null;
-        let dbEnv: string | null;
-
         if (options.liveEnv) {
             passboltEnv = await dockerapi.getDockerEnv(options.passboltContainerName);
-            dbEnv = await dockerapi.getDockerEnv(options.dbContainerName);
         } else {
             passboltEnv = await LinuxShellAPI.getFile(options.passboltEnvPath);
-            dbEnv = await LinuxShellAPI.getFile(options.dbEnvPath);
         }
 
         if (!passboltEnv) {
             console.error("Error getting the passbolt env configuration.");
             process.exit(1);
         }
-        if (!dbEnv) {
-            console.error("Error getting the database env configuration.");
-            process.exit(1);
-        }
 
-        const archive = BackupArchive.fromFileList(Uint64.from(Date.now()), {
-            "db/dump.sql": dbDump,
-            "gpg/serverkey_private.asc": serverKeys.privateKey,
-            "gpg/serverkey.asc": serverKeys.publicKey,
-            "env/passbolt.env": passboltEnv,
-            "env/db.env": dbEnv
-        });
 
-        return archive;
+        files["gpg/serverkey_private.asc"] = serverKeys.privateKey;
+        files["gpg/serverkey.asc"] = serverKeys.publicKey;
+        files["env/passbolt.env"] = passboltEnv;
+
+        return BackupArchive.fromFileList(Uint64.from(Date.now()), files);;
 
     }
 

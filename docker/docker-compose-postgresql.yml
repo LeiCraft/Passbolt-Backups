@@ -23,6 +23,10 @@ services:
       DATASOURCES_DEFAULT_URL: "postgres://passbolt:P4ssb0lt@db:5432/passbolt?schema=passbolt"
       EMAIL_TRANSPORT_DEFAULT_HOST: "smtp.domain.tld"
       EMAIL_TRANSPORT_DEFAULT_PORT: 587
+
+      DOCKER_PASSBOLT_CONTAINER: "passbolt"
+      DOCKER_DB_CONTAINER: "db"      
+      DOCKER_DB_TYPE: "postgres"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - gpg_volume:/etc/passbolt/gpg
