@@ -1,4 +1,4 @@
-name: Publish Talk Docker Image
+name: Publish Docker Image
 
 on:
   workflow_call:
