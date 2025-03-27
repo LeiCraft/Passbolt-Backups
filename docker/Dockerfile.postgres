@@ -5,5 +5,5 @@ COPY --chown=root:root ./docker/default.env /etc/passbolt-backups/default.env
 
 RUN chmod +x /usr/local/bin/passbolt-backups
 
-RUN apt-get install -y postgresql-client
+RUN apt-get install -y cron postgresql-client
 
