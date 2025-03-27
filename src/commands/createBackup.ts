@@ -4,6 +4,7 @@ import { Utils } from "../utils.js";
 import { BackupArchive, type FileList } from "../archive.js";
 import { LinuxShellAPI } from "../apis/linux-shell.js";
 import { Uint64 } from "low-level";
+import { BackupHelper } from "../apis/helper.js";
 
 
 export class CreateBackupCMD extends CLICMD {
@@ -27,26 +28,20 @@ export class CreateBackupCMD extends CLICMD {
 
         const files: FileList = {};
 
-        
+        files["data/passbolt.sql"] = await BackupHelper.getDBDump(config.CAKE_BIN, config.WEB_SERVER_USER);
 
         files["gpg/serverkey_private.asc"] = await LinuxShellAPI.getFile(config.GPG_SERVER_PRIVATE_KEY);
         files["gpg/serverkey.asc"] = await LinuxShellAPI.getFile(config.GPG_SERVER_PUBLIC_KEY);
+
+        if (config.PASSBOLT_CONFIG_FILE) {
+            files["config/passbolt.php"] = await LinuxShellAPI.getFile(config.PASSBOLT_CONFIG_FILE);
+        }
 
         if (config.SAVE_ENV === "true") {
             files["env/passbolt.env"] = await LinuxShellAPI.getEnv();
         }
 
         const archive = BackupArchive.fromFileList(Uint64.from(Date.now()), files);
-
-        /*const archive = await BackupManager.createDockerBackup({
-            withDB: config.DOCKER_USE_DB,
-            passboltContainerName: config.DOCKER_PASSBOLT_CONTAINER,
-            passboltEnvPath: config.DOCKER_POSSBOLT_ENV,
-            dbContainerName: config.DOCKER_DB_CONTAINER,
-            dbType: config.DOCKER_DB_TYPE,
-            dbEnvPath: config.DOCKER_DB_ENV,
-            liveEnv: config.DOCKER_LIVE_ENV === "true"
-        } as any);*/
 
         const rawArchive = config.ENCRYPTION_PASSPHRASE ? archive.encrypt(config.ENCRYPTION_PASSPHRASE) : archive.toRaw();
 

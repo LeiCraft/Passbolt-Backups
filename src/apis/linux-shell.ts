@@ -1,29 +1,27 @@
+import type { ShellPromise } from "bun";
+import { existsSync } from "fs";
 
 export class LinuxShellAPI {
 
-    private static async exec(cmd: string) {
-        try {
-            const result = await Bun.$`${{ raw: cmd }}`.quiet();
-            return { code: result.exitCode, data: result.text() };
-        } catch {
-            return { code: 1 } as const;
+    static async handleExec(sp: ShellPromise) {
+        const result = await sp.quiet();
+        if (result.exitCode !== 0) {
+            throw new Error(`Failed to execute command`);
         }
+        return result.text();
     }
 
-    private static async saveExec(cmd: string) {
-        const result = await this.exec(cmd);
-        if (result.code !== 0) {
-            throw new Error(`Failed to execute command: ${cmd}`);
+    static getFile(path: string) {
+        if (!existsSync(path)) {
+            throw new Error(`File ${path} does not exist`);
         }
-        return result.data;
+        const promise = Bun.$`cat ${path}`;
+        return this.handleExec(promise);
     }
 
-    static async getFile(path: string) {
-        return await this.saveExec(`cat ${path}`);
-    }
-
-    static async getEnv() {
-        return await this.saveExec("printenv");;
+    static getEnv() {
+        const promise = Bun.$`printenv`;
+        return this.handleExec(promise);
     }
 
 }
