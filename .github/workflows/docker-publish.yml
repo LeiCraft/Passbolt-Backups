@@ -53,7 +53,7 @@ jobs:
         run: bun compile linux-x64-baseline ${{ inputs.version }} --no-version-tag
 
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: compiled-binary
           path: ./build/bin/linux-x64-baseline
@@ -71,7 +71,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Compiled Binary
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: compiled-binary
           path: ./build/bin/linux-x64-baseline
@@ -131,7 +131,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Compiled Binary
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: compiled-binary
           path: ./build/bin/linux-x64-baseline
