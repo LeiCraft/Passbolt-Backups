@@ -1,5 +1,5 @@
 import { CLIApp, type CLICMDExecMeta } from "@cleverjs/cli";
-import { CreateBackupCMD } from "./commands/createBackup";
+import { CreateBackupCMD } from "./commands/createCMD";
 
 class Main extends CLIApp {
     
