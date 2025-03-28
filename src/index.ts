@@ -13,7 +13,7 @@ class Main extends CLIApp {
         console.log("Usage: passbolt-backups <command> [options]");
         console.log("Options:");
         console.log("  --config=<path_to_env>  Path to the env file, if there are not automatically set");
-        super.run_help(meta);        
+        super.run_help(meta);
     }
 
 }
