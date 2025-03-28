@@ -1,0 +1,60 @@
+name: Docker Build and Push
+description: "Build and Push Docker Image"
+inputs:
+  registry:
+    description: "Docker Registry"
+    required: false
+    default: "ghcr.io"
+  image-name:
+    description: "Docker Image Name"
+    required: true
+  image-tag:
+    description: "Docker Image Tag"
+    required: true
+  dockerfile:
+    description: "Dockerfile Path"
+    required: true
+  labels:
+    description: "Docker Image Labels"
+    required: true
+  version:
+    description: 'Release version Format: x.y.z-[alpha|beta|pre].n'
+    required: true
+    type: string
+  pre_release:
+    description: 'Is this a pre-release?'
+    required: false
+    default: "false"
+    type: string
+
+runs:
+  using: "composite"
+  permissions:
+    contents: read
+    packages: write
+  steps:
+    - name: Download Compiled Binary
+      uses: actions/download-artifact@v4
+      with:
+        name: docker_linux_binary
+        path: ./build/bin/passbolt-backups-linux-x64-baseline
+
+    - name: Build and push Docker image
+      id: build-and-push
+      uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+      with:
+        context: .
+        file: ./docker/${{ inputs.dockerfile }}
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ inputs.registry }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
+        labels: ${{ inputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Sign the published Docker image
+      if: ${{ github.event_name != 'pull_request' }}
+      env:
+        TAGS: ${{ inputs.registry }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
+        DIGEST: ${{ steps.build-and-push.outputs.digest }}
+      run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+

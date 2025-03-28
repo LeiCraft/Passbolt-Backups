@@ -1,9 +1,3 @@
-FROM passbolt/passbolt:latest-ce
-
-COPY --chown=root:root ./build/bin/passbolt-backups-linux-x64-baseline /usr/local/bin/passbolt-backups
-COPY --chown=root:root ./docker/default.env /etc/passbolt-backups/default.env
-
-RUN chmod +x /usr/local/bin/passbolt-backups
+FROM ghcr.io/leicraft/passbolt-with-backups:base
 
 RUN apt-get install -y cron postgresql-client
-

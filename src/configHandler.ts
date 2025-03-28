@@ -94,21 +94,21 @@ class ConfigSchema<T extends ConfigSchemaSettings = {}> {
 export class ConfigHandler {
 
     private static schema = new ConfigSchema()
-        .add("S3_ENDPOINT", true)
-        .add("S3_ACCESS_KEY_ID", true)
-        .add("S3_SECRET_ACCESS_KEY", true)
-        .add("S3_BUCKET", false)
-        .add("S3_BASE_PATH", false)
+        .add("PB_S3_ENDPOINT", true)
+        .add("PB_S3_ACCESS_KEY_ID", true)
+        .add("PB_S3_SECRET_ACCESS_KEY", true)
+        .add("PB_S3_BUCKET", false)
+        .add("PB_S3_BASE_PATH", false)
 
-        .add("WEB_SERVER_USER", true)
-        .add("CAKE_BIN", true)
-        .add("GPG_SERVER_PRIVATE_KEY", true)
-        .add("GPG_SERVER_PUBLIC_KEY", true)
-        .add("PASSBOLT_CONFIG_FILE", false)
+        .add("PB_WEB_SERVER_USER", true)
+        .add("PB_CAKE_BIN", true)
+        .add("PB_GPG_SERVER_PRIVATE_KEY", true)
+        .add("PB_GPG_SERVER_PUBLIC_KEY", true)
+        .add("PB_PASSBOLT_CONFIG_FILE", false)
 
-        .add("SAVE_ENV", false, ["true", "false"])
+        .add("PB_SAVE_ENV", false, ["true", "false"])
 
-        .add("ENCRYPTION_PASSPHRASE", false);
+        .add("PB_ENCRYPTION_PASSPHRASE", false);
 
 
     private static config: (ConfigLike<typeof this.schema.schema> & {

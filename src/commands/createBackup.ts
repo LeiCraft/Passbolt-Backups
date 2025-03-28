@@ -19,31 +19,31 @@ export class CreateBackupCMD extends CLICMD {
         args = result.args;
         
         const s3 = new S3Service({
-            endpoint: config.S3_ENDPOINT,
-            accessKeyId: config.S3_ACCESS_KEY_ID,
-            secretAccessKey: config.S3_SECRET_ACCESS_KEY,
-            bucket: config.S3_BUCKET,
-            basePath: config.S3_BASE_PATH
+            endpoint: config.PB_S3_ENDPOINT,
+            accessKeyId: config.PB_S3_ACCESS_KEY_ID,
+            secretAccessKey: config.PB_S3_SECRET_ACCESS_KEY,
+            bucket: config.PB_S3_BUCKET,
+            basePath: config.PB_S3_BASE_PATH
         });
 
         const files: FileList = {};
 
-        files["data/passbolt.sql"] = await BackupHelper.getDBDump(config.CAKE_BIN, config.WEB_SERVER_USER);
+        files["data/passbolt.sql"] = await BackupHelper.getDBDump(config.PB_CAKE_BIN, config.PB_WEB_SERVER_USER);
 
-        files["gpg/serverkey_private.asc"] = await LinuxShellAPI.getFile(config.GPG_SERVER_PRIVATE_KEY);
-        files["gpg/serverkey.asc"] = await LinuxShellAPI.getFile(config.GPG_SERVER_PUBLIC_KEY);
+        files["gpg/serverkey_private.asc"] = await LinuxShellAPI.getFile(config.PB_GPG_SERVER_PRIVATE_KEY);
+        files["gpg/serverkey.asc"] = await LinuxShellAPI.getFile(config.PB_GPG_SERVER_PUBLIC_KEY);
 
-        if (config.PASSBOLT_CONFIG_FILE) {
-            files["config/passbolt.php"] = await LinuxShellAPI.getFile(config.PASSBOLT_CONFIG_FILE);
+        if (config.PB_PASSBOLT_CONFIG_FILE) {
+            files["config/passbolt.php"] = await LinuxShellAPI.getFile(config.PB_PASSBOLT_CONFIG_FILE);
         }
 
-        if (config.SAVE_ENV === "true") {
+        if (config.PB_SAVE_ENV === "true") {
             files["env/passbolt.env"] = await LinuxShellAPI.getEnv();
         }
 
         const archive = BackupArchive.fromFileList(Uint64.from(Date.now()), files);
 
-        const rawArchive = config.ENCRYPTION_PASSPHRASE ? archive.encrypt(config.ENCRYPTION_PASSPHRASE) : archive.toRaw();
+        const rawArchive = config.PB_ENCRYPTION_PASSPHRASE ? archive.encrypt(config.PB_ENCRYPTION_PASSPHRASE) : archive.toRaw();
 
         await s3.uploadBackup(rawArchive);
 
