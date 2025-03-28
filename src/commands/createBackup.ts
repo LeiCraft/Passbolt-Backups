@@ -28,7 +28,7 @@ export class CreateBackupCMD extends CLICMD {
 
         const files: FileList = {};
 
-        files["data/passbolt.sql"] = await BackupHelper.getDBDump(config.PB_CAKE_BIN, config.PB_WEB_SERVER_USER);
+        files["data/passbolt.sql"] = await BackupHelper.getNewDBDump(config.PB_CAKE_BIN, config.PB_WEB_SERVER_USER);
 
         files["gpg/serverkey_private.asc"] = await LinuxShellAPI.getFile(config.PB_GPG_SERVER_PRIVATE_KEY);
         files["gpg/serverkey.asc"] = await LinuxShellAPI.getFile(config.PB_GPG_SERVER_PUBLIC_KEY);

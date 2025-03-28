@@ -3,7 +3,7 @@ import { existsSync } from "fs";
 
 export class BackupHelper {
 
-    static getDBDump(cakeBin: string, webServerUser: string) {
+    static async getNewDBDump(cakeBin: string, webServerUser: string) {
         if (!existsSync(cakeBin)) {
             throw new Error("Invalid cakeBin path.");
         }
@@ -11,8 +11,19 @@ export class BackupHelper {
             throw new Error("Invalid webServerUser.");
         }
         
-        const promise = Bun.$`su -s /bin/bash -c "${cakeBin} passbolt mysql_export" ${webServerUser}`;
-        return LinuxShellAPI.handleExec(promise);
+        const backupFileName = "passbolt_backup_" + Date.now() + ".sql";
+        const backupFilePath = `/tmp/${backupFileName}`;
+
+        const promise = Bun.$`su -s /bin/bash -c "${cakeBin} passbolt sql_export --dir /tmp --file ${backupFileName}" ${webServerUser}`;
+        await LinuxShellAPI.handleExec(promise);
+
+        if (!existsSync(backupFilePath)) {
+            throw new Error("Failed to create backup file.");
+        }
+        const fileContent = await LinuxShellAPI.getFile(backupFilePath);
+        await LinuxShellAPI.delFile(backupFilePath);
+
+        return fileContent;
     }
 
 }
