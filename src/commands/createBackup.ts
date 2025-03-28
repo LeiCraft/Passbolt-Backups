@@ -37,7 +37,7 @@ export class CreateBackupCMD extends CLICMD {
             files["config/passbolt.php"] = await LinuxShellAPI.getFile(config.PB_PASSBOLT_CONFIG_FILE);
         }
 
-        if (config.PB_SAVE_ENV === "true") {
+        if (config.PB_SAVE_ENV?.toLowerCase() === "true") {
             files["env/passbolt.env"] = await LinuxShellAPI.getEnv();
         }
 
