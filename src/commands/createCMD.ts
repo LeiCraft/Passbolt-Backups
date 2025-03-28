@@ -1,11 +1,10 @@
 import { CLICMD, type CLICMDExecMeta } from "@cleverjs/cli";
 import { S3Service } from "../s3-service.js";
 import { Utils } from "../utils.js";
-import { BackupArchive, type FileList } from "../archive.js";
+import { BackupArchive, type RawBackupArchive, type FileList } from "../archive.js";
 import { LinuxShellAPI } from "../apis/linux-shell.js";
 import { Uint64 } from "low-level";
 import { BackupHelper } from "../apis/helper.js";
-
 
 export class CreateBackupCMD extends CLICMD {
     readonly name = "create";
@@ -17,35 +16,46 @@ export class CreateBackupCMD extends CLICMD {
         const result = await Utils.parseDefaultArgs(args);
         const config = result.config;
         args = result.args;
-        
-        const s3 = new S3Service({
-            endpoint: config.PB_S3_ENDPOINT,
-            accessKeyId: config.PB_S3_ACCESS_KEY_ID,
-            secretAccessKey: config.PB_S3_SECRET_ACCESS_KEY,
-            bucket: config.PB_S3_BUCKET,
-            basePath: config.PB_S3_BASE_PATH
-        });
 
+        const timeStamp = Date.now();
+
+        console.log(`Creating new backup of Passbolt at ${new Date(timeStamp).toLocaleString()}`);
         const files: FileList = {};
 
         files["data/passbolt.sql"] = await BackupHelper.getNewDBDump(config.PB_CAKE_BIN, config.PB_WEB_SERVER_USER);
+        console.log("Database dump created.");
 
         files["gpg/serverkey_private.asc"] = await LinuxShellAPI.getFile(config.PB_GPG_SERVER_PRIVATE_KEY);
         files["gpg/serverkey.asc"] = await LinuxShellAPI.getFile(config.PB_GPG_SERVER_PUBLIC_KEY);
+        console.log("GPG keys copied.");
 
         if (config.PB_PASSBOLT_CONFIG_FILE) {
             files["config/passbolt.php"] = await LinuxShellAPI.getFile(config.PB_PASSBOLT_CONFIG_FILE);
+            console.log("Passbolt config copied.");
         }
 
-        if (config.PB_SAVE_ENV?.toLowerCase() === "true") {
+        if (config.PB_SAVE_ENV) {
             files["env/passbolt.env"] = await LinuxShellAPI.getEnv();
+            console.log("Environment variables copied.");
         }
 
-        const archive = BackupArchive.fromFileList(Uint64.from(Date.now()), files);
+        console.log("Creating backup archive...");
+        const archive = BackupArchive.fromFileList(Uint64.from(timeStamp), files);
 
-        const rawArchive = config.PB_ENCRYPTION_PASSPHRASE ? archive.encrypt(config.PB_ENCRYPTION_PASSPHRASE) : archive.toRaw();
+        let rawArchive: RawBackupArchive;
+        if (config.PB_ENCRYPTION_PASSPHRASE) {
+            rawArchive = archive.encrypt(config.PB_ENCRYPTION_PASSPHRASE);
+            console.log("Encrypted successfully created.");
+        } else {
+            rawArchive = archive.toRaw();
+            console.log("Unencrypted successfully created.");
+        }
 
+        console.log("Uploading backup to S3...");
+
+        const s3 = S3Service.fromConfig(config);
         await s3.uploadBackup(rawArchive);
 
+        console.log(`Backup successfully uploaded to S3`);
     }
 }

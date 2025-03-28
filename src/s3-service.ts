@@ -1,6 +1,7 @@
 import { S3Client } from "bun";
 import { RawBackupArchive } from "./archive";
 import { Uint } from "low-level";
+import type { ParsedConfig } from "./configHandler";
 
 export class S3Service {
 
@@ -37,6 +38,16 @@ export class S3Service {
                 this.basePath = options.basePath;
             }
         }
+    }
+
+    static fromConfig(config: ParsedConfig) {
+        return new S3Service({
+            endpoint: config.PB_S3_ENDPOINT,
+            accessKeyId: config.PB_S3_ACCESS_KEY_ID,
+            secretAccessKey: config.PB_S3_SECRET_ACCESS_KEY,
+            bucket: config.PB_S3_BUCKET,
+            basePath: config.PB_S3_BASE_PATH
+        });
     }
 
     async uploadBackup(rawBackup: RawBackupArchive) {

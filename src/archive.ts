@@ -5,8 +5,8 @@ import { AES256 } from "./crypto";
 
 export type FilePath = string;
 
-export type FileList = {
-    [key: FilePath]: Uint | string;
+export type FileList<T extends Uint | string = Uint | string> = {
+    [key: FilePath]: T;
 }
 
 export class SingleFile extends Container {
@@ -77,17 +77,17 @@ export class BackupArchive extends BackupArchiveHeader {
         version: Uint16 = Uint16.from(0)
     ) {super(time, version)}
 
-    static fromFileList(time: Uint64, files: FileList) {
-        return new BackupArchive(
-            time,
-            new BackupArchiveContent(
-                Object.entries(files).map(([path, data]) => new SingleFile(
-                    path,
-                    data instanceof Uint ? data : Uint.from(data, "utf8")
-                ))
-            )
-        );
+
+    async getFileList(encoding?: "hex"): Promise<FileList<Uint>>;
+    async getFileList(encoding: "utf8"): Promise<FileList<string>>;
+    async getFileList(encoding: "hex" | "utf8" = "hex") {
+        const fileList: FileList = {};
+        for (const file of this.content.files) {
+            fileList[file.path] = encoding === "utf8" ? file.content.toString("utf8") : file.content;
+        }
+        return fileList;
     }
+
 
     public toHeader() {
         return new BackupArchiveHeader(
@@ -110,6 +110,19 @@ export class BackupArchive extends BackupArchiveHeader {
         const encryptedContent = AES256.encrypt(encodedContent, passphrase);
         return new RawBackupArchive(this.toHeader(), true, encryptedContent);
     }
+
+
+    static fromFileList(time: Uint64, files: FileList) {
+        return new BackupArchive(
+            time,
+            new BackupArchiveContent(
+                Object.entries(files).map(([path, data]) => new SingleFile(
+                    path,
+                    data instanceof Uint ? data : Uint.from(data, "utf8")
+                ))
+            )
+        );
+    }
     
     /**
      * Encrypts an backup archive
@@ -119,7 +132,15 @@ export class BackupArchive extends BackupArchiveHeader {
     static fromEncrypted(data: Uint, passphrase?: string) {
         const raw = RawBackupArchive.fromDecodedHex(data);
         if (!raw) return null;
+        return BackupArchive.fromRaw(raw, passphrase);        
+    }
 
+    /**
+     * Decrypts an raw backup archive
+     * @param raw The raw backup archive
+     * @param passphrase The passphrase to decrypt the data. If data is not encrypted, this parameter is ignored.
+     */
+    static fromRaw(raw: RawBackupArchive, passphrase?: string) {
         let decryptedRawContent: Uint;
 
         if (raw.encrypted) {
@@ -135,7 +156,6 @@ export class BackupArchive extends BackupArchiveHeader {
         if (!content) return null;
         return BackupArchive.fromHeaderAndContent(raw.header, content);
     }
-
 
     static fromHeaderAndContent(header: BackupArchiveHeader, content: BackupArchiveContent) {
         return new BackupArchive(header.time, content, header.version);

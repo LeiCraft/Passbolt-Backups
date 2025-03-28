@@ -12,7 +12,7 @@ interface ConfigSchemaSetting<
 
 namespace ConfigSchemaSetting {
     export type Required = boolean;
-    export type Type = string[] | undefined;
+    export type Type = string[] | boolean[] | undefined;
     export type Dependencies = Record<string, string[]> | undefined;
     export type Sample = ConfigSchemaSetting<Required, Type/*, Dependencies*/>;
 }
@@ -20,7 +20,7 @@ namespace ConfigSchemaSetting {
 type ConfigValueType<
     T extends ConfigSchemaSetting.Sample,
     F = [T] extends [ConfigSchemaSetting<any, infer U/*, any*/>]
-    ? U extends string[]
+    ? U extends (string | boolean)[]
         ? U[number]
         : string
     : string
@@ -58,8 +58,10 @@ class ConfigSchema<T extends ConfigSchemaSettings = {}> {
         const result: ConfigLike<T> = {} as ConfigLike<T>;
 
         for (const [key, settings] of Object.entries(this.schema)) {
+            
+            const value = process.env[key];
 
-            if (!process.env[key]) {
+            if (!value) {
                 if (settings.required) {
                     console.error(`The environment variable ${key} is required but not set.`);
                     process.exit(1);
@@ -67,12 +69,18 @@ class ConfigSchema<T extends ConfigSchemaSettings = {}> {
                 continue;
             }
 
-            (result[key] as any) = process.env[key];
-
-            if (settings.type && !settings.type.includes(process.env[key].toLowerCase())) {
-                console.error(`The environment variable ${key} has to be one of the following: ${settings.type.join(", ")}`);
-                process.exit(1);
+            if (settings.type) {
+                if (typeof settings.type[0] === "boolean") {
+                    (result[key] as any) = value.toLowerCase() === "true" ? true : false;
+                    continue;
+                }
+                if (!(settings.type as string[]).includes(value.toLowerCase())) {
+                    console.error(`The environment variable ${key} has to be one of the following: ${settings.type.join(", ")}`);
+                    process.exit(1);
+                }
             }
+
+            (result[key] as any) = value;
 
             /*if (settings.dependencies) {
                 const dependencies = settings.dependencies[process.env[key]] || settings.dependencies["any"];
@@ -91,6 +99,9 @@ class ConfigSchema<T extends ConfigSchemaSettings = {}> {
 
 }
 
+// @ts-ignore
+export type ParsedConfig = ConfigLike<typeof ConfigHandler.schema.schema>;
+
 export class ConfigHandler {
 
     private static schema = new ConfigSchema()
@@ -106,14 +117,12 @@ export class ConfigHandler {
         .add("PB_GPG_SERVER_PUBLIC_KEY", true)
         .add("PB_PASSBOLT_CONFIG_FILE", false)
 
-        .add("PB_SAVE_ENV", false, ["true", "false"])
+        .add("PB_SAVE_ENV", false, [true, false])
 
         .add("PB_ENCRYPTION_PASSPHRASE", false);
 
 
-    private static config: (ConfigLike<typeof this.schema.schema> & {
-        DOCKER_USE_DB: boolean;
-    }) | null = null;
+    private static config: ParsedConfig | null = null;
 
     /** You have to call {@link ConfigHandler.parseConfigFile} before trying to access the config. */
     static getConfig() {
@@ -136,7 +145,7 @@ export class ConfigHandler {
         }
     }
 
-    static async parseConfigFile(file?: string | null) {
+    static async parseConfigFile(file?: string | null): Promise<ParsedConfig> {
         if (this.config) return this.config;
 
         if (file) {

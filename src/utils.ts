@@ -1,10 +1,9 @@
 import { CMDFlag, CMDFlagsParser } from "@cleverjs/cli";
-import { ConfigHandler } from "./configHandler.js";
-
+import { ConfigHandler, type ParsedConfig } from "./configHandler.js";
 
 export class Utils {
 
-    static async parseDefaultArgs(args: string[], parent_args: string[] = []) {
+    static async parseDefaultArgs(args: string[], parent_args: string[] = []): Promise<{ args: string[], config: ParsedConfig }> {
 
         const flagParser = new CMDFlagsParser({
             "--config": new CMDFlag("string", "Path to the configuration file", false, null),
