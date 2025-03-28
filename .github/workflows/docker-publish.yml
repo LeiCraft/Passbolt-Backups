@@ -52,13 +52,6 @@ jobs:
       
       - name: Build Binary
         run: bun compile linux-x64-baseline ${{ inputs.version }} --no-version-tag
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker_linux_binary
-          path: ./build/bin/passbolt-backups-linux-x64-baseline
-          retention-days: 1
       
       - name: Setup Docker
         id: docker-setup
