@@ -15,8 +15,7 @@ Passbolt-Backups is a tool that automates the backup process for your Passbolt p
 
 - Docker and Docker Compose
 - A running Passbolt instance
-- Sufficient storage space for backups
-- S3-compatible storage (optional)
+- S3-compatible storage
 
 ## Quick Start
 
