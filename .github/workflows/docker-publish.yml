@@ -27,7 +27,6 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: leicraft/passbolt-with-backups
-  BASE_IMAGE_TAG: latest
 
 jobs:
 
@@ -68,7 +67,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           image-name: ${{ env.IMAGE_NAME }}
-          image-tag: ${{ env.BASE_IMAGE_TAG }}-base
+          image-tag-suffix: -base
           dockerfile: Dockerfile.base
           labels: ${{ steps.docker-setup.outputs.labels }}
           version: ${{ inputs.version }}
@@ -79,7 +78,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           image-name: ${{ env.IMAGE_NAME }}
-          image-tag: ${{ env.BASE_IMAGE_TAG }}-mysql
+          image-tag-suffix: -mysql
           dockerfile: Dockerfile.mysql
           labels: ${{ steps.docker-setup.outputs.labels }}
           version: ${{ inputs.version }}
@@ -90,7 +89,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           image-name: ${{ env.IMAGE_NAME }}
-          image-tag: ${{ env.BASE_IMAGE_TAG }}-postgres
+          image-tag-suffix: -postgres
           dockerfile: Dockerfile.postgres
           labels: ${{ steps.docker-setup.outputs.labels }}
           version: ${{ inputs.version }}
