@@ -29,9 +29,6 @@ inputs:
 
 runs:
   using: "composite"
-  permissions:
-    contents: read
-    packages: write
   steps:
     - name: Download Compiled Binary
       uses: actions/download-artifact@v4
@@ -56,5 +53,6 @@ runs:
       env:
         TAGS: ${{ inputs.registry }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
         DIGEST: ${{ steps.build-and-push.outputs.digest }}
+      shell: bash
       run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
