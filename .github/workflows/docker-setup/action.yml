@@ -5,6 +5,12 @@ inputs:
     description: "Docker Registry"
     required: false
     default: "ghcr.io"
+  username:
+    description: "GitHub Username"
+    required: true
+  gh-token:
+    description: "GitHub Token"
+    required: true
   image-name:
     description: "Docker Image Name"
     required: true
@@ -15,9 +21,6 @@ outputs:
 
 runs:
   using: "composite"
-  permissions:
-    contents: read
-    packages: write
   steps:
       - name: Install cosign
         if: github.event_name != 'pull_request'
@@ -33,8 +36,8 @@ runs:
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
         with:
           registry: ${{ inputs.registry }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ inputs.username }}
+          password: ${{ inputs.gh-token }}
 
       - name: Extract Docker metadata
         id: meta

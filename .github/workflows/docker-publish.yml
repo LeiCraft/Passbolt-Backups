@@ -65,6 +65,8 @@ jobs:
         uses: ./.github/workflows/docker-setup
         with:
           registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
           image-name: ${{ env.IMAGE_NAME }}
 
       - name: Build and push Base Image
