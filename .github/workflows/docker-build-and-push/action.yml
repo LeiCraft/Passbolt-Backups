@@ -63,5 +63,9 @@ runs:
         TAGS: ${{ steps.set-tags.outputs.tags }}
         DIGEST: ${{ steps.build-and-push.outputs.digest }}
       shell: bash
-      run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+      run: |
+        # Split TAGS by comma and sign each tag separately
+        echo "${TAGS}" | tr ',' '\n' | while read -r tag; do
+          cosign sign --yes "${tag}@${DIGEST}"
+        done
 
