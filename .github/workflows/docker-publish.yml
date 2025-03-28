@@ -67,6 +67,17 @@ jobs:
           registry: ${{ env.REGISTRY }}
           image-name: ${{ env.IMAGE_NAME }}
 
+      - name: Build and push Base Image
+        uses: ./.github/workflows/docker-build-and-push
+        with:
+          registry: ${{ env.REGISTRY }}
+          image-name: ${{ env.IMAGE_NAME }}
+          image-tag: ${{ env.BASE_IMAGE_TAG }}-base
+          dockerfile: Dockerfile.base
+          labels: ${{ steps.docker-setup.outputs.labels }}
+          version: ${{ inputs.version }}
+          pre_release: ${{ inputs.pre_release }}
+
       - name: Build and push MySQL Image
         uses: ./.github/workflows/docker-build-and-push
         with:
