@@ -1,13 +1,11 @@
-import { ShellError, type ShellPromise } from "bun";
+import { type ShellPromise } from "bun";
 import { existsSync } from "fs";
-import { Logger } from "../logger";
 
 export class LinuxShellAPI {
 
     static async handleExec(sp: ShellPromise) {
         try {
             const result = await sp.quiet();
-            Logger.debug(`Command executed successfully`);
             return result.text();
         } catch (e: any) {
             if (e.stderr) {
@@ -18,20 +16,19 @@ export class LinuxShellAPI {
     }
 
     static getFile(path: string) {
-        if (!existsSync(path)) {
+        const file = Bun.file(path);
+        if (!file.exists()) {
             throw new Error(`File ${path} does not exist`);
         }
-        const promise = Bun.$`cat ${path}`;
-        Logger.debug(`Reading file ${path}...`);
-        return this.handleExec(promise);
+        return file.text();
     }
 
     static delFile(path: string) {
-        if (!existsSync(path)) {
+        const file = Bun.file(path);
+        if (!file.exists()) {
             throw new Error(`File ${path} does not exist`);
         }
-        const promise = Bun.$`rm ${path}`;
-        return this.handleExec(promise);
+        return file.delete();
     }
 
     static getEnv() {
