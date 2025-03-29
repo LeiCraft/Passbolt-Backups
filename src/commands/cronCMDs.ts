@@ -18,14 +18,10 @@ export class CronCMD extends CLISubCMD {
 class CronSetupCMD extends CLICMD {
     readonly name = "setup";
     readonly description = "Setup cron job for automatic backup creation.";
-    readonly usage = "setup [--config=<path_to_env>] <cron_time> [<bin_path>]";
+    readonly usage = "setup <cron_time> [<bin_path>] [<custom_env>]";
 
     async run(args: string[]) {
         console.log("Setting up cron job...");
-
-        const result = await Utils.parseDefaultArgs(args);
-        const flags = result.flags;
-        args = result.args;
 
         if (args.length > 2) {
             console.error("You have to specify the backup name and the destination directory.");
@@ -34,8 +30,9 @@ class CronSetupCMD extends CLICMD {
 
         const cronTime = args[0] || "0 0 * * *";
         const binPath = args[1] || "/usr/local/bin/passbolt-backups";
+        const customENV = args[2];
 
-        const create_result = await CronHelper.createCronJob(cronTime, binPath, flags["--config"], true);
+        const create_result = await CronHelper.createCronJob(cronTime, binPath, customENV, true);
 
         if (create_result) {
             console.log("Cron job created successfully.");
