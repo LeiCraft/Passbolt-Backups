@@ -1,4 +1,5 @@
 import { CLICMD } from "@cleverjs/cli";
+import { Logger } from "../logger";
 
 export class VersionCMD extends CLICMD {
     readonly name = "version";
