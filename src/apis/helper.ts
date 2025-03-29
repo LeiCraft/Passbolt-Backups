@@ -64,7 +64,7 @@ export class CronHelper {
         }
 
         let cronJob = `PATH=/bin:/usr/local/bin:/usr/bin\n\n` +
-            `${cronTime} root /bin/bash -c ". /etc/environment && ${binPath} create --as-cron ${customENV ? "--config=" + customENV : ""}" >/proc/1/fd/1 2>&1`;
+            `${cronTime} root /bin/bash -c ". /etc/environment && ${binPath} create --as-cron ${customENV ? "--config=" + customENV : ""}" >/proc/1/fd/1 2>&1\n`;
 
         await Bun.write(path, cronJob, { mode: 0o644 });
         return true;
