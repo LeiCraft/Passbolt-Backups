@@ -1,11 +1,13 @@
 import { ShellError, type ShellPromise } from "bun";
 import { existsSync } from "fs";
+import { Logger } from "../logger";
 
 export class LinuxShellAPI {
 
     static async handleExec(sp: ShellPromise) {
         try {
-            const result = await sp;
+            const result = await sp.quiet();
+            Logger.debug(`Command executed successfully`);
             return result.text();
         } catch (e: any) {
             if (e.stderr) {
