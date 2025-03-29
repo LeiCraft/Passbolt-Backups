@@ -22,8 +22,13 @@ export class BackupHelper {
         if (!existsSync(backupFilePath)) {
             throw new Error("Failed to create backup file.");
         }
+
+        Logger.debug(`Reading DB dump from ${backupFilePath}`);
         const fileContent = await LinuxShellAPI.getFile(backupFilePath);
+
+        Logger.debug(`DB dump read successfully. Deleting dump file...`);
         await LinuxShellAPI.delFile(backupFilePath);
+        Logger.debug(`DB dump file deleted.`);
 
         return fileContent;
     }
