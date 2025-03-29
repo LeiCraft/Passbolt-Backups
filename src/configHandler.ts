@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { Logger } from "./logger";
 
 interface ConfigSchemaSetting<
     REQUIRED extends ConfigSchemaSetting.Required,
@@ -63,7 +64,7 @@ class ConfigSchema<T extends ConfigSchemaSettings = {}> {
 
             if (!value) {
                 if (settings.required) {
-                    console.error(`The environment variable ${key} is required but not set.`);
+                    Logger.error(`The environment variable ${key} is required but not set.`);
                     process.exit(1);
                 }
                 continue;
@@ -75,7 +76,7 @@ class ConfigSchema<T extends ConfigSchemaSettings = {}> {
                     continue;
                 }
                 if (!(settings.type as string[]).includes(value.toLowerCase())) {
-                    console.error(`The environment variable ${key} has to be one of the following: ${settings.type.join(", ")}`);
+                    Logger.error(`The environment variable ${key} has to be one of the following: ${settings.type.join(", ")}`);
                     process.exit(1);
                 }
             }
@@ -88,7 +89,7 @@ class ConfigSchema<T extends ConfigSchemaSettings = {}> {
 
                 for (const dep of dependencies) {
                     if (!process.env[dep]) {
-                        console.error(`The environment variable ${dep} is required by ${key} but not set.`);
+                        Logger.error(`The environment variable ${dep} is required by ${key} but not set.`);
                         process.exit(1);
                     }
                 }
@@ -142,7 +143,7 @@ export class ConfigHandler {
                 }
             }
         } catch (e: any) {
-            console.error(`Error reading the env file: ${e.message}`);
+            Logger.error(`Error reading the env file: ${e.message}`);
             process.exit(1);
         }
     }

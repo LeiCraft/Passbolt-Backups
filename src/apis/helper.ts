@@ -1,3 +1,4 @@
+import { Logger } from "../logger";
 import { LinuxShellAPI } from "./linux-shell";
 import { existsSync } from "fs";
 
@@ -16,6 +17,7 @@ export class BackupHelper {
 
         const promise = Bun.$`su -s /bin/bash -c "${cakeBin} passbolt sql_export --dir /tmp --file ${backupFileName}" ${webServerUser}`;
         await LinuxShellAPI.handleExec(promise);
+        Logger.debug(`DB dump saved to ${backupFilePath}`);
 
         if (!existsSync(backupFilePath)) {
             throw new Error("Failed to create backup file.");

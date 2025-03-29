@@ -1,5 +1,6 @@
 import { CMDFlag, CMDFlagsParser } from "@cleverjs/cli";
-import { ConfigHandler, type ParsedConfig } from "./configHandler.js";
+import { ConfigHandler } from "./configHandler.js";
+import { Logger } from "./logger.js";
 
 export class Utils {
 
@@ -12,7 +13,7 @@ export class Utils {
 
         const parsingResult = flagParser.parse(args, true);
         if (typeof parsingResult === "string") {
-            console.error(parsingResult);
+            Logger.error(parsingResult);
             process.exit(1);
         }
         const flags = parsingResult.result;
@@ -26,3 +27,4 @@ export class Utils {
     }
     
 }
+

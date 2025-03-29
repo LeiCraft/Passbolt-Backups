@@ -1,6 +1,7 @@
 import { CLICMD, CLISubCMD } from "@cleverjs/cli";
 import { Utils } from "../utils";
 import { CronHelper } from "../apis/helper";
+import { Logger } from "../logger.js";
 
 export class CronCMD extends CLISubCMD {
 
@@ -21,10 +22,10 @@ class CronSetupCMD extends CLICMD {
     readonly usage = "setup <cron_time> [<bin_path>] [<custom_env>]";
 
     async run(args: string[]) {
-        console.log("Setting up cron job...");
+        Logger.log("Setting up cron job...");
 
         if (args.length > 2) {
-            console.error("You have to specify the backup name and the destination directory.");
+            Logger.error("You have to specify the backup name and the destination directory.");
             process.exit(1);
         }
 
@@ -35,9 +36,9 @@ class CronSetupCMD extends CLICMD {
         const create_result = await CronHelper.createCronJob(cronTime, binPath, customENV, true);
 
         if (create_result) {
-            console.log("Cron job created successfully.");
+            Logger.log("Cron job created successfully.");
         } else {
-            console.error("Failed to create cron job.");
+            Logger.error("Failed to create cron job.");
         }
     }
 
@@ -49,13 +50,13 @@ class CronDeleteCMD extends CLICMD {
     readonly usage = "delete [--config=<path_to_env>]";
 
     async run(args: string[]) {
-        console.log("Deleting cron job...");
+        Logger.log("Deleting cron job...");
 
         const result = await CronHelper.deleteCronJob();
         if (result) {
-            console.log("Cron job deleted successfully.");
+            Logger.log("Cron job deleted successfully.");
         } else {
-            console.error("Failed to delete cron job.");
+            Logger.error("Failed to delete cron job.");
         }
     }
 
