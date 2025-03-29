@@ -1,14 +1,18 @@
-import type { ShellPromise } from "bun";
+import { ShellError, type ShellPromise } from "bun";
 import { existsSync } from "fs";
 
 export class LinuxShellAPI {
 
     static async handleExec(sp: ShellPromise) {
-        const result = await sp.quiet();
-        if (result.exitCode !== 0) {
+        try {
+            const result = await sp.quiet();
+            return result.text();
+        } catch (e: any) {
+            if (e.stderr) {
+                throw new Error(`Failed to execute command \n${e.stderr}\n`);
+            }
             throw new Error(`Failed to execute command`);
         }
-        return result.text();
     }
 
     static getFile(path: string) {
