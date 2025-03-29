@@ -32,8 +32,11 @@ export class LinuxShellAPI {
     }
 
     static getEnv() {
-        const promise = Bun.$`printenv`;
-        return this.handleExec(promise);
+        let env = "";
+        for (const key in process.env) {
+            env += `${key}=${process.env[key]}\n`;
+        }
+        return env.trimEnd();
     }
 
 }
