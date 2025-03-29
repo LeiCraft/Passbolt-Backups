@@ -8,6 +8,6 @@ export class VersionCMD extends CLICMD {
 
     async run(args: string[]) {
         const version = process.env.APP_VERSION || "unknown";
-        console.log(`${version}`);
+        Logger.log(`${version}`);
     }
 }
