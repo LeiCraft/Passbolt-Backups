@@ -30,6 +30,8 @@ services:
       PB_S3_BUCKET: ""
       PB_S3_BASE_PATH: ""
 
+      PB_AUTO_BACKUP: true
+
       #PB_PASSBOLT_CONFIG_FILE: "/etc/passbolt/config/passbolt.php"
 
       PB_ENCRYPTION_PASSPHRASE: ""

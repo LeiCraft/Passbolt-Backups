@@ -119,6 +119,8 @@ export class ConfigHandler {
 
         .add("PB_SAVE_ENV", false, [true, false])
 
+        .add("PB_AUTO_BACKUP", false, [true, false])
+
         .add("PB_ENCRYPTION_PASSPHRASE", false);
 
 
