@@ -17,6 +17,7 @@ class Main extends CLIApp {
     }
 
     protected async run_help(meta: CLICMDExecMeta): Promise<void> {
+        Logger.log(`Passbolt Backups CLI v${process.env.APP_VERSION || "unknown"}`);
         Logger.log("Usage: passbolt-backups <command> [...args]");
         Logger.log("Options:");
         Logger.log("  --config=<path_to_env>  Path to the env file, if there are not automatically set");
