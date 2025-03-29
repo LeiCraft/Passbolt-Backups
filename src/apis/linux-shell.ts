@@ -22,6 +22,7 @@ export class LinuxShellAPI {
             throw new Error(`File ${path} does not exist`);
         }
         const promise = Bun.$`cat ${path}`;
+        Logger.debug(`Reading file ${path}...`);
         return this.handleExec(promise);
     }
 
