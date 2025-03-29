@@ -5,7 +5,7 @@ export class LinuxShellAPI {
 
     static async handleExec(sp: ShellPromise) {
         try {
-            const result = await sp.quiet();
+            const result = await sp;
             return result.text();
         } catch (e: any) {
             if (e.stderr) {
