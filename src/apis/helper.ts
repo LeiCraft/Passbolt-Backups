@@ -36,7 +36,7 @@ export class CronHelper {
         /^(\*|([0-5]?\d)|([0-5]?\d-[0-5]?\d)|(\*\/[0-9]+)|([0-5]?\d(,[0-5]?\d)*))\s+(\*|([01]?\d|2[0-3])|([01]?\d|2[0-3]-[01]?\d|2[0-3])|(\*\/[0-9]+)|([01]?\d|2[0-3](,[01]?\d|2[0-3])*))\s+(\*|([1-9]|[12]\d|3[01])|([1-9]|[12]\d|3[01]-[1-9]|[12]\d|3[01])|(\*\/[0-9]+)|([1-9]|[12]\d|3[01](,[1-9]|[12]\d|3[01])*))\s+(\*|([1-9]|1[0-2])|([1-9]|1[0-2]-[1-9]|1[0-2])|(\*\/[0-9]+)|([1-9]|1[0-2](,[1-9]|1[0-2])*))\s+(\*|([0-6])|([0-6]-[0-6])|(\*\/[0-9]+)|([0-6](,[0-6])*))$/;
     
 
-    static async createCronJob(cronTime: string, binPath: string = "/usr/local/bin/passbolt-backups", customENV?: string, override: boolean = false) {
+    static async createCronJob(cronTime: string, binPath: string, customENV?: string | null, override: boolean = false) {
         
         if (!this.CRON_REGEX.test(cronTime)) {
             throw new Error("Invalid cron time format.");
@@ -57,7 +57,7 @@ export class CronHelper {
         }
 
         let cronJob = `PATH=/bin:/usr/local/bin:/usr/bin\n\n` +
-            `${cronTime} root /bin/bash -c ". /etc/environment && ${binPath} cron run ${customENV ? "--config=" + customENV + " " : ""}" >/proc/1/fd/1 2>&1`;
+            `${cronTime} root /bin/bash -c ". /etc/environment && ${binPath} create --as-cron ${customENV ? "--config=" + customENV : ""}" >/proc/1/fd/1 2>&1`;
 
         await Bun.write(path, cronJob, { mode: 0o644 });
         return true;
@@ -72,7 +72,6 @@ export class CronHelper {
         }
 
         await LinuxShellAPI.delFile(path);
-
         return true;
     }
 

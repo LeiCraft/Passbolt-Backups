@@ -1,12 +1,14 @@
 import { CLIApp, type CLICMDExecMeta } from "@cleverjs/cli";
 import { CreateBackupCMD } from "./commands/createCMD";
 import { DownloadBackupCMD } from "./commands/downloadCMD";
+import { CronCMD } from "./commands/cronCMDs";
 
 class Main extends CLIApp {
     
     protected onInit(): void | Promise<void> {
         this.register(new CreateBackupCMD());
         this.register(new DownloadBackupCMD());
+        this.register(new CronCMD());
     }
 
     protected async run_help(meta: CLICMDExecMeta): Promise<void> {

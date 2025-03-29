@@ -3,10 +3,11 @@ import { ConfigHandler, type ParsedConfig } from "./configHandler.js";
 
 export class Utils {
 
-    static async parseDefaultArgs(args: string[], parent_args: string[] = []): Promise<{ args: string[], config: ParsedConfig }> {
+    static async parseDefaultArgs(args: string[], parent_args: string[] = []) {
 
         const flagParser = new CMDFlagsParser({
             "--config": new CMDFlag("string", "Path to the configuration file", false, null),
+            "--as-cron": new CMDFlag("bool", "Run as cron job", true, false),
         });
 
         const parsingResult = flagParser.parse(args, true);
@@ -19,7 +20,8 @@ export class Utils {
 
         return {
             args,
-            config: await ConfigHandler.parseConfigFile(flags["--config"])
+            config: await ConfigHandler.parseConfigFile(flags["--config"]),
+            flags
         };
     }
     

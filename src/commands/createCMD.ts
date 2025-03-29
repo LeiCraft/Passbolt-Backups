@@ -9,13 +9,19 @@ import { BackupHelper } from "../apis/helper.js";
 export class CreateBackupCMD extends CLICMD {
     readonly name = "create";
     readonly description = "Creates a backup of the Passbolt data and uploads it to the S3 bucket.";
-    readonly usage = "create [--config=<path_to_env>]";
-
+    readonly usage = "create [--config=<path_to_env>] [--as-cron]";
+    
     async run(args: string[], meta: CLICMDExecMeta) {
         
         const result = await Utils.parseDefaultArgs(args);
+        const flags = result.flags;
         const config = result.config;
         args = result.args;
+
+        if (flags["--as-cron"] && !config.PB_AUTO_BACKUP) {
+            console.error("Automatic backup is not enabled.");
+            process.exit(1);
+        }
 
         const timeStamp = Date.now();
 
