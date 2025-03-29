@@ -3,6 +3,7 @@ import { CLIApp, CMDFlag, CMDFlagsParser, type CLICMDExecMeta } from "@cleverjs/
 import { CreateBackupCMD } from "./commands/createCMD";
 import { DownloadBackupCMD } from "./commands/downloadCMD";
 import { CronCMD } from "./commands/cronCMDs";
+import { VersionCMD } from "./commands/versionCMD";
 
 class Main extends CLIApp {
     
@@ -14,6 +15,7 @@ class Main extends CLIApp {
         this.register(new CreateBackupCMD());
         this.register(new DownloadBackupCMD());
         this.register(new CronCMD());
+        this.register(new VersionCMD());
     }
 
     protected async run_help(meta: CLICMDExecMeta): Promise<void> {
